@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <ListPreference
+        android:defaultValue="@string/languageEnglishDiminutive"
+        android:entries="@array/prefLanguageStringEntries"
+        android:entryValues="@array/prefLanguageStringValues"
+        android:key="language_key"
+        android:summary="@string/prefLanguageSummary"
+        android:title="@string/prefLanguageTitle" />
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="voice_key"
+        android:summary="@string/prefVoiceSummary"
+        android:title="@string/prefVoiceTitle" />
+    
+        <ListPreference
+        android:defaultValue="@string/auto"
+        android:entries="@array/prefNightModeStrings"
+        android:entryValues="@array/prefNightModeValues"
+        android:key="night_mode_key"
+        android:title="@string/prefNightModeTitle" />
+        
+        <!-- <ListPreference
+         android:defaultValue="@string/languageEnglishDiminutive"
+        android:entries="@array/prefLanguageStringEntries"
+        android:entryValues="@array/prefLanguageStringValues"
+        android:key="proximity_key"
+        android:summary="@string/prefProximitySummary"
+        android:title="@string/prefProximity" />-->
+    
+
+    <!--  -->
+        <ListPreference
+        android:defaultValue="@string/auto"
+        android:entries="@array/prefProximityStrings"
+        android:entryValues="@array/prefProximityValues"
+        android:key="proximity_key"
+        android:title="@string/prefProximityTitle" />
+       
+<!--  -->
+    <MultiSelectListPreference 
+        android:defaultValue="@array/prefIncidenceValues"
+        android:key="incidence_key"
+        android:entries="@array/prefIncidenceStrings"
+        android:entryValues="@array/prefIncidenceValues"
+        android:summary="@string/prefIncidenceSummary"
+        android:title="@string/prefIncidenceTitle"
+        />
+
+</PreferenceScreen>

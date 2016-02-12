@@ -1,0 +1,56 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Base application theme, dependent on API level. This theme is replaced
+        by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
+    -->
+    <style name="AppBaseTheme" parent="android:Theme.Light">
+        <!--
+            Theme customizations available in newer API levels can go in
+            res/values-vXX/styles.xml, while customizations related to
+            backward-compatibility can go here.
+        -->
+    </style>
+
+    <!-- Application theme. -->
+    <style name="AppTheme.Light" parent="@android:style/Theme.Material.Light">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+        <item name="android:colorPrimaryDark">#37474F</item><!-- BlueGrey 800 for notifications bar -->
+        <item name="android:colorPrimary">@color/material_blue_grey_700</item><!-- BlueGrey 700 for app bar -->
+        <item name="android:textColorPrimary">#ffffff</item>
+        <item name="android:textColor">#000000</item>
+    </style>
+    <style name="AppTheme.Dark" parent="@android:style/Theme.Material">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+        <item name="android:colorPrimaryDark">#37474F</item><!-- BlueGrey 800 for notifications bar -->
+        <item name="android:colorPrimary">@color/material_blue_grey_700</item><!-- BlueGrey 700 for app bar -->
+        <item name="android:textColorPrimary">#000000</item>
+        <item name="android:textColor">#ffffff</item>
+    </style>
+    <style name="CustomActionBarTheme.Light"
+        parent="@style/AppTheme.Light">
+        <item name="android:colorPrimary">@color/transparent</item><!-- Transparent app bar -->
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="roadImage">@drawable/road_grey400</item>
+        <item name="thermometerImage">@drawable/thermometer</item>
+        <item name="humidityImage">@drawable/humidity</item>
+        <item name="windImage">@drawable/wind</item>
+    </style>
+    <style name="CustomActionBarTheme.Dark"
+        parent="@style/AppTheme.Dark">
+        <item name="android:colorPrimary">@color/transparent</item><!-- Transparent app bar -->
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="roadImage">@drawable/road_black</item>
+        <item name="thermometerImage">@drawable/thermometer_night</item>
+        <item name="humidityImage">@drawable/humidity_night</item>
+        <item name="windImage">@drawable/wind_night</item>
+    </style>
+
+
+
+    <style name="sample_activity">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">fill_parent</item>
+    </style>
+
+</resources>

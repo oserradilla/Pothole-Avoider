@@ -1,0 +1,8 @@
+<resources>
+    <declare-styleable name="customAttrs">
+        <attr name="roadImage" format="reference" />
+        <attr name="thermometerImage" format="reference" />
+        <attr name="humidityImage" format="reference" />
+        <attr name="windImage" format="reference" />
+    </declare-styleable>
+</resources>

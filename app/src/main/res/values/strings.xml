@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Pothole Avoider</string>
+    <string name="legal">Legal Notices</string>
+    <string name="no_maps">Google Maps V2 not available!</string>
+    <string name="normal">Normal</string>
+    <string name="hybrid">Hybrid</string>
+    <string name="satellite">Satellite</string>
+    <string name="terrain">Terrain</string>
+    <string name="un">UN</string>
+    <string name="united_nations">United Nations</string>
+    <string name="lincoln_center">Lincoln Center</string>
+    <string name="lincoln_center_snippet">Home of Jazz at Lincoln Center</string>
+    <string name="carnegie_hall">Carnegie Hall</string>
+    <string name="practice_x3">Where you go with practice, practice, practice</string>
+    <string name="downtown_club">The Downtown Club</string>
+    <string name="heisman_trophy">Original home of the Heisman Trophy</string>
+    <string name="action_settings">Settings</string>
+    <string name="List">List paired Devices</string>
+    <string name="Find">Search new Devices / Cancel</string>
+    <string name="Visible">Make our device visible</string>
+    <string name="Connect">Connect to Arduino</string>
+    <string name="Text">Status: -</string>
+    <string name="title_activity_text_to_speech">TextToSpeechActivity</string>
+    <string name="textSlope">Slope:</string>
+    <string name="percentageSymbol">%</string>
+    <string name="textEstimatedSlope">Estimated slope</string>
+    <string name="textHumedity">Humedity:</string>
+    <string name="textConsumedFuelInTrip">Consumed fuel since the last car start</string>
+    <string name="litresSymbol">l</string>
+    <string name="travelledKilometersInTrip">"Travelled kilometers since the last car start "</string>
+    <string name="kilometerSymbol">km</string>
+    <string name="textNextObstacle">Next obstable type:</string>
+    <string name="nextObstacleIntensity">Next obstacle intensity:</string>
+    <string name="obstacleType">type</string>
+    <string name="textLatitude">Latitude:</string>
+    <string name="textLongitude">Longitude:</string>
+    <string name="textAltitude">Altitude:</string>
+    <string name="preferencesActivityLabel">Settings</string>
+    <string name="potholeDescription">Pothole</string>
+
+    <!-- Preferences Strings -->
+    <string name="applicationSettingsCategoryTitle">Application settings</string>
+    <string name="prefLanguageTitle">Language</string>
+    <string name="prefLanguageSummary">Voice and text language settings</string>
+    <string name="mainImgDesc">Main image</string>
+
+    <string-array name="prefLanguageStringEntries">
+        <item>@string/languageEnglish</item>
+        <item>@string/languageSpanish</item>
+    </string-array>
+
+    <string name="languageEnglish">English</string>
+    <string name="languageSpanish">Spanish</string>
+
+    <string-array name="prefLanguageStringValues">
+        <item>@string/languageEnglishDiminutive</item>
+        <item>@string/languageSpanishDiminutive</item>
+    </string-array>
+
+    <string name="languageEnglishDiminutive">en</string>
+    <string name="languageSpanishDiminutive">es</string>
+    <string name="notificationsCategoryTitle">Notifications</string>
+    <string name="prefVoiceTitle">Voice</string>
+    <string name="prefVoiceSummary">Enables voice nofitications</string>
+    <string name="prefNotificationsTitle">Notifications</string>
+    <string name="prefNotificationsSummary">Enables apps notifications (dangers, next obstacles&#8230;)</string>
+    <string name="userCategoryTitle">User</string>
+    <string name="preferencesTitle">Preferences</string>
+    <string name="prefUserTitle">User data</string>
+    <string name="prefUserSummary">Accounts information</string>
+    <string name="prefStatisticsTitle">Statistics</string>
+    <string name="prefStatisticsSummary">See and export graphics and statistics of driving</string>
+    <string name="aboutCategoryTitle">About</string>
+    <string name="prefAboutTitle">About</string>
+    <string name="prefAboutSummary">Application and author information</string>
+    <string name="navigationTitle">Navigate</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_preferences">PreferencesActivity</string>
+    <string name="title_activity_user_data">UserDataActivity</string>
+    <string name="title_activity_about">AboutActivity</string>
+    <string name="helpTitle">Help</string>
+    <string name="prefProximity">Proximity distance</string>
+    <string name="prefProximitySummary">Configure incidence detection distance</string>
+    
+    <!-- Preferences night mode -->
+    <string name="prefNightModeTitle">Night mode</string>
+    <string-array name="prefNightModeStrings">
+        <item>On</item>
+		<item>Off</item>
+		<item>Auto</item>
+	</string-array>
+	<string-array name="prefNightModeValues">
+        <item>@string/on</item>
+		<item>@string/off</item>
+		<item>@string/auto</item>
+	</string-array>
+	<string name="on">on</string>
+	<string name="off">off</string>
+	<string name="auto">auto</string>
+	
+    <!-- Preferences Proximity -->
+    <string name="prefProximityTitle">Proximity</string>
+    <string-array name="prefProximityStrings">
+        <item>Near (500m)</item>
+		<item>Far (1000m)</item>
+		<item>Auto</item>
+	</string-array>
+	<string-array name="prefProximityValues">
+        <item>@string/near</item>
+		<item>@string/far</item>
+		<item>@string/auto</item>
+	</string-array>
+	<string name="near">near</string>
+	<string name="far">far</string>
+	
+	<!-- Preferences  -->
+	<string name="prefDistanceTitle">Distance</string>
+	<string name="prefDistanceSummary">Unit of measurement</string>
+	
+	
+	
+	
+	<!-- ................................................ -->
+	<string-array name="prefDistanceStringEntries">
+        <item>@string/distanceKm</item>
+        <item>@string/distanceMi</item>
+    </string-array>
+
+    <string name="distanceKm">Km/h</string>
+    <string name="distanceMi">Mi/h</string>
+
+    <string-array name="prefDistanceStringValues">
+        <item>@string/kmhValue</item>
+        <item>@string/mihValue</item>
+    </string-array>
+
+    <string name="kmhValue">kmh</string>
+    <string name="mihValue">mih</string>
+    
+	<!-- ................................................ -->
+	
+	<string name="prefIncidenceTitle">Notify incidences</string>
+	<string name="prefIncidenceSummary">Choose which incidences are going to be shown</string>
+	<string-array name="prefIncidenceStrings">
+	    <item>Dangerous curve</item>
+	    <item>Dangerous slope</item>
+	    <item>Pothole</item>
+	    <item>Wet pavement</item>	    
+	</string-array>
+	<string-array name="prefIncidenceValues">
+	    <item>curve</item>
+	    <item>slope</item>
+	    <item>pothole</item>
+	    <item>pavement</item>	    
+	</string-array>
+	
+
+    <string name="drawer_open">Open navigation drawer</string>
+    <string name="drawer_close">Close navigation drawer</string>
+    <string name="action_websearch">Web search</string>
+    <string name="app_not_available">Sorry, there\'s no web browser available</string>
+
+    <string name="incidenceDistance">Distance</string>
+    <string name="statisticsActivityLabel">Statistics</string>
+    <string name="helpActivityLabel">Help</string>
+    <string name="userDataActivityLabel">User data</string>
+    <string name="ble_not_supported">No BLE available</string>
+    <string name="searching">searching</string>
+    <string name="curveDescription">Curve</string>
+    <string name="slopeDescription">Slope</string>
+</resources>

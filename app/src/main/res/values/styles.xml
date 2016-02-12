@@ -1,0 +1,61 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Base application theme, dependent on API level. This theme is replaced
+        by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
+    -->
+    <style name="AppBaseTheme" parent="android:Theme.Light">
+        <!--
+            Theme customizations available in newer API levels can go in
+            res/values-vXX/styles.xml, while customizations related to
+            backward-compatibility can go here.
+        -->
+    </style>
+
+    <!-- Application theme. -->
+    <style name="AppTheme.Light" parent="@android:style/Theme.Holo.Light">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+        <!-- <item name="android:actionBarStyle">@style/CustomActionBarTheme</item>-->
+        <!-- BlueGrey 800 for notifications bar -->
+    </style>
+    <style name="AppTheme.Dark" parent="@android:style/Theme.Holo">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+        <!-- <item name="android:actionBarStyle">@style/CustomActionBarTheme</item>-->
+        <!-- BlueGrey 800 for notifications bar -->
+    </style>
+    <style name="CustomActionBarTheme.Light"
+           parent="@style/AppTheme.Light">
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:actionBarStyle">@style/CustomActionBarTheme2</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="roadImage">@drawable/road_grey400</item>
+        <item name="thermometerImage">@drawable/thermometer</item>
+        <item name="humidityImage">@drawable/humidity</item>
+        <item name="windImage">@drawable/wind</item>
+    </style>
+    <style name="CustomActionBarTheme.Dark"
+        parent="@style/AppTheme.Dark">
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:actionBarStyle">@style/CustomActionBarTheme2</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="roadImage">@drawable/road_black</item>
+        <item name="thermometerImage">@drawable/thermometer_night</item>
+        <item name="humidityImage">@drawable/humidity_night</item>
+        <item name="windImage">@drawable/wind_night</item>
+    </style>
+
+    <style name="CustomActionBarTheme2"
+           parent="@android:style/Widget.Holo.Light.ActionBar.Solid.Inverse">
+        <item name="android:background">@color/transparent</item>
+        <item name="android:backgroundStacked">@android:color/transparent</item>
+        <item name="android:displayOptions">showHome|homeAsUp|showTitle</item>
+        <item name="displayOptions">showHome|homeAsUp|showTitle</item>
+        <item name="android:icon">@android:color/transparent</item>
+    </style>
+
+    <style name="sample_activity">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">fill_parent</item>
+    </style>
+
+</resources>
