@@ -22,7 +22,7 @@ android {
 
 dependencies {
     compile 'com.google.code.gson:gson:2.3'
-    compile 'com.google.android.gms:play-services-location:6.5.+'
+    compile 'com.google.android.gms:play-services-location:8.4.0'
     compile 'com.android.support:appcompat-v7:21.0.3'
     compile files('libs/androidplot-core-0.6.2.jar')
     compile files('libs/commons-lang3-3.3.2.jar')

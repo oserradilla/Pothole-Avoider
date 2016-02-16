@@ -119,8 +119,8 @@ private static final int REQUEST_RESOLVE_ERROR = 1001;
 			synchronized(waitNotNullQueue){
 				waitNotNullQueue.notifyAll();
 			}
-			Location currentLocation = location;//Takes current location as the real GPS position
-            //Location currentLocation = loadNextSimulatedLocation();//Simulates a route ignoring the one taken from the GPS
+			//Location currentLocation = location;//Takes current location as the real GPS position
+            Location currentLocation = loadNextSimulatedLocation();//Simulates a route ignoring the one taken from the GPS
             gpsBuffer.putLocation(currentLocation);
             Log.i(TAG, "Location changed :" + currentLocation.getLatitude() + ","
 					+ currentLocation.getLongitude()+" accuracy: "+currentLocation.getAccuracy());

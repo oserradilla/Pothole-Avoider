@@ -5,9 +5,9 @@ public class WebServerConnection {
 	public static String HTTP="http://";
 	//Pothole avoider system variables
     //Raspberry's Settings
-	public static String INCIDENCES_ADDRESS="www.potholeavoider.es";//Servers IP or Domain address
-	public static String INCIDENCES_PORT="80";
-	public static String INCIDENCES_GLOBAL_PATH="/pha_rpi/web-service";
+	public static String INCIDENCES_ADDRESS="potholeavoider.ddns.net";//Servers IP or Domain address
+	public static String INCIDENCES_PORT="8080";
+	public static String INCIDENCES_GLOBAL_PATH="/potholeAvoiderWebServer/web-service";
     //My laptops settings
     /*public static String INCIDENCES_ADDRESS="192.168.0.16";
     public static String INCIDENCES_PORT="8080";
