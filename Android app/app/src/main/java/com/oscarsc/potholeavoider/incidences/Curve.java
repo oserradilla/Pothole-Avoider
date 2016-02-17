@@ -22,7 +22,7 @@ public class Curve extends Incidence{
 	}
 	public Curve(int id,Location location, int magnitude, boolean isRight) {
 		// TODO Substitue 0 0 and -1 by previous location (lat and lon)
-		curve = new LibCurve(-id,location.getLatitude(), location.getLongitude(), 0,
+		curve = new LibCurve(id,location.getLatitude(), location.getLongitude(), 0,
 				0, location.getAccuracy(), magnitude, isRight);
 	}
 

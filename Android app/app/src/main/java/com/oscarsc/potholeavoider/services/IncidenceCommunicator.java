@@ -28,7 +28,7 @@ public class IncidenceCommunicator implements Observer {
     private MainActivityHandler mainHandler;
     private ArrayList<Incidence> nextIncidences = new ArrayList<Incidence>();
     private TimerTask incidenceUpdaterTask;
-    public final static int NEXTINCIDENCESUPDATETIME = 10;// 90seconds = 1.5minutes
+    public final static int NEXTINCIDENCESUPDATETIME = 120;// 120 seconds = 2 minutes
     public final static float LOADNEXTINCIDENCESRATIOKILOMETERS = 1000.0f;// 10Km
     public final static double PROXIMITYWARNINGDISTANCEKILOMETERS = 1.0;// 1Km
     public final static double ANGLE_DEGREES_VECTORS_ROAD_DIRECTION = 20;
@@ -71,12 +71,13 @@ public class IncidenceCommunicator implements Observer {
                         Location firstLocation = gpsListener.getFirstLocation();
                         Location prevIncidenceLocation = incidence.getPrevLocation();
                         Location incidenceLocation = incidence.getLocation();
-                        boolean areVectorsInRange = gpsListener.areVectorsInRange(firstLocation, currentLocation,
-                                prevIncidenceLocation, incidenceLocation, ANGLE_DEGREES_VECTORS_ROAD_DIRECTION);
                         boolean isVisitedInLastLocationChange = gpsListener.isOnEllipse(gpsListener.getLocation(2),
                                 currentLocation, incidenceLocation);
                         if(!isVisitedInLastLocationChange) {
-                            if (areVectorsInRange)
+                            // TODO Vector of the direction of the vehicle removed because doesnt work well (supposed to warn only about dangers in the same direction of the road)
+                            /*boolean areVectorsInRange = gpsListener.areVectorsInRange(firstLocation, currentLocation,
+                                    prevIncidenceLocation, incidenceLocation, ANGLE_DEGREES_VECTORS_ROAD_DIRECTION);
+                            if (areVectorsInRange)*/
                                 nearIncidences.add(new IncidenceDistance(incidence, roundedDistance, 0));
                         }else{
                             incidence.setVisited(true);
