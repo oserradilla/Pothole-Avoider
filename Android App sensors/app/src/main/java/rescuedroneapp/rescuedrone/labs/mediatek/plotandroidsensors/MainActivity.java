@@ -40,11 +40,15 @@ public class MainActivity extends Activity implements SensorEventListener,
     private LinearLayout layout;
     private View mChart;
 
+    private FileWriter fileWriter;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         layout = (LinearLayout) findViewById(R.id.chart_container);
+
+        fileWriter = new FileWriter(this);
 
         sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         asm = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -160,6 +164,7 @@ public class MainActivity extends Activity implements SensorEventListener,
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btnStart:
+                fileWriter.restart();
                 btnStart.setEnabled(false);
                 btnStop.setEnabled(true);
                 btnUpload.setEnabled(false);
@@ -177,7 +182,7 @@ public class MainActivity extends Activity implements SensorEventListener,
                 sm.unregisterListener(this);
                 layout.removeAllViews();
                 openChart();
-
+                fileWriter.writeToFile();
                 // show data in chart
                 break;
             case R.id.btnUpload:
@@ -274,5 +279,9 @@ public class MainActivity extends Activity implements SensorEventListener,
         measure[2] = Zaxis - gravity[2];
         AccelData data = new AccelData(System.currentTimeMillis(), Xaxis, Yaxis, Zaxis);
         sensorData.add(data);
+        fileWriter.setFloat(Xaxis);
+        fileWriter.setFloat(Yaxis);
+        fileWriter.setFloat(Zaxis);
+        fileWriter.nextLine();
     }
 }
