@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors"
-        minSdkVersion 15
+        minSdkVersion 23
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
@@ -21,8 +21,10 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:1.9.5'
+    androidTestCompile 'com.android.support:support-annotations:23.1.0'
     compile 'com.android.support:appcompat-v7:23.1.0'
     compile 'com.android.support:design:23.1.0'
     compile files('libs/achartengine-1.0.0.jar')
+    testCompile 'junit:junit:4.12'
 }

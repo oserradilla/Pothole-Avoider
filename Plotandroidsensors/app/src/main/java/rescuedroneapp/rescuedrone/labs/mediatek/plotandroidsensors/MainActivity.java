@@ -31,6 +31,7 @@ public class MainActivity extends Activity implements SensorEventListener,
     private float Yaxis;
     private float Zaxis;
     private Sensor asm;
+    private Sensor gyroscope;
     private Sensor magnetometer;
     private float[] measure = new float[3];
     private float[] rMatrix = new float[9];
@@ -49,8 +50,9 @@ public class MainActivity extends Activity implements SensorEventListener,
 
         sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         asm = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        gyroscope = sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         magnetometer = sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-
+        magnetometer.getMinDelay();
         sensorData = new ArrayList();
 
         btnStart = (Button) findViewById(R.id.btnStart);
@@ -72,6 +74,7 @@ public class MainActivity extends Activity implements SensorEventListener,
         super.onResume();
         sm.registerListener(this, asm, SensorManager.SENSOR_DELAY_FASTEST);
         sm.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST);
+        sm.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     @Override
@@ -94,6 +97,7 @@ public class MainActivity extends Activity implements SensorEventListener,
     }
 
     float[] mGravity;
+    float[] mGyroscope;
     float[] mGeomagnetic;
     float timestamp = 1;
 
@@ -110,6 +114,8 @@ public class MainActivity extends Activity implements SensorEventListener,
                 mGravity = event.values.clone();
                 ctr = ctr+1 >= 100 ? 100 : ctr+1;
             }
+            if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE)
+                mGyroscope = event.values.clone();
             if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
                 mGeomagnetic = event.values.clone();
             if (mGravity != null && mGeomagnetic != null && ctr == 100) {
@@ -118,7 +124,9 @@ public class MainActivity extends Activity implements SensorEventListener,
                     transformedVector[0] = RotationMatrix[0] * mGravity[0] + RotationMatrix[1] * mGravity[1] + RotationMatrix[2] * mGravity[2];
                     transformedVector[1] = RotationMatrix[3] * mGravity[0] + RotationMatrix[4] * mGravity[1] + RotationMatrix[5] * mGravity[2];
                     transformedVector[2] = RotationMatrix[6] * mGravity[0] + RotationMatrix[7] * mGravity[1] + RotationMatrix[8] * mGravity[2];
-                    Log.v("X,Y,Z", String.valueOf(mGravity[0]) + ","+ String.valueOf(mGravity[1]) + "," + String.valueOf(mGravity[2]));
+                    Log.v("Accel", String.valueOf(mGravity[0]) + ","+ String.valueOf(mGravity[1]) + "," + String.valueOf(mGravity[2]));
+                    Log.v("Gyro", String.valueOf(mGyroscope[0]) + ","+ String.valueOf(mGyroscope[1]) + "," + String.valueOf(mGyroscope[2]));
+                    Log.v("Magne", String.valueOf(mGeomagnetic[0]) + ","+ String.valueOf(mGeomagnetic[1]) + "," + String.valueOf(mGeomagnetic[2]));
                     AccelData data = new AccelData(System.currentTimeMillis(), transformedVector[0],
                             transformedVector[1], transformedVector[2]);
                     sensorData.add(data);
