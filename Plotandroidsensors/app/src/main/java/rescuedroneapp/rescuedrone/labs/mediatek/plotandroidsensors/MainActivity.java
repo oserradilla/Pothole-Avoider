@@ -10,29 +10,20 @@ import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Color;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
-public class MainActivity extends Activity implements SensorEventListener,
+public class MainActivity extends Activity implements
         OnClickListener {
-    private SensorManager sm;
+
     private float Xaxis;
     private float Yaxis;
     private float Zaxis;
-    private Sensor asm;
-    private Sensor gyroscope;
-    private Sensor magnetometer;
+
     private float[] measure = new float[3];
     private float[] rMatrix = new float[9];
 
@@ -42,18 +33,18 @@ public class MainActivity extends Activity implements SensorEventListener,
     private LinearLayout layout;
     private View mChart;
 
+    private Sensors sensors;
+    private RollingWindow rollingWindow;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         layout = (LinearLayout) findViewById(R.id.chart_container);
 
-        sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        asm = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        gyroscope = sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        magnetometer = sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        magnetometer.getMinDelay();
         sensorData = new ArrayList();
+
+        sensors = new Sensors(this);
 
         btnStart = (Button) findViewById(R.id.btnStart);
         btnStop = (Button) findViewById(R.id.btnStop);
@@ -72,70 +63,26 @@ public class MainActivity extends Activity implements SensorEventListener,
     @Override
     protected void onResume() {
         super.onResume();
-        sm.registerListener(this, asm, SensorManager.SENSOR_DELAY_FASTEST);
-        sm.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST);
-        sm.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_FASTEST);
+        sensors.startCollectingData();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         if (started == true) {
-            sm.unregisterListener(this);
+            sensors.stopCollectingData();
         }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        sm.unregisterListener(this);
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
-
-    float[] mGravity;
-    float[] mGyroscope;
-    float[] mGeomagnetic;
-    float timestamp = 1;
-
-    int ctr = 0;
-    boolean rInitialized = false;
-
-    float I[] = new float[9];
-    float RotationMatrix[] = new float[9];
-
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (started) {
-            if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                mGravity = event.values.clone();
-                ctr = ctr+1 >= 100 ? 100 : ctr+1;
-            }
-            if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE)
-                mGyroscope = event.values.clone();
-            if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
-                mGeomagnetic = event.values.clone();
-            if (mGravity != null && mGeomagnetic != null && ctr == 100) {
-                if (rInitialized) {
-                    float transformedVector[] = new float[3];
-                    transformedVector[0] = RotationMatrix[0] * mGravity[0] + RotationMatrix[1] * mGravity[1] + RotationMatrix[2] * mGravity[2];
-                    transformedVector[1] = RotationMatrix[3] * mGravity[0] + RotationMatrix[4] * mGravity[1] + RotationMatrix[5] * mGravity[2];
-                    transformedVector[2] = RotationMatrix[6] * mGravity[0] + RotationMatrix[7] * mGravity[1] + RotationMatrix[8] * mGravity[2];
-                    Log.v("Accel", String.valueOf(mGravity[0]) + ","+ String.valueOf(mGravity[1]) + "," + String.valueOf(mGravity[2]));
-                    Log.v("Gyro", String.valueOf(mGyroscope[0]) + ","+ String.valueOf(mGyroscope[1]) + "," + String.valueOf(mGyroscope[2]));
-                    Log.v("Magne", String.valueOf(mGeomagnetic[0]) + ","+ String.valueOf(mGeomagnetic[1]) + "," + String.valueOf(mGeomagnetic[2]));
-                    AccelData data = new AccelData(System.currentTimeMillis(), transformedVector[0],
-                            transformedVector[1], transformedVector[2]);
-                    sensorData.add(data);
-                } else {
-                    rInitialized = SensorManager.getRotationMatrix(RotationMatrix, I, mGravity, mGeomagnetic);
-                    Toast.makeText(this, "Rotation matrix created", Toast.LENGTH_LONG).show();
-                }
-            }
-        }
+    protected void onDestroy() {
+        super.onDestroy();
+        sensors.stopCollectingData();
     }
 
     @Override
@@ -146,20 +93,22 @@ public class MainActivity extends Activity implements SensorEventListener,
                 btnStop.setEnabled(true);
                 btnUpload.setEnabled(false);
                 sensorData = new ArrayList();
+                sensors.startCollectingData();
+                AI ai = new AI();
+                ArrayList<RollingWindowChanges> rollingWindowChangesListeners = new ArrayList<>();
+                rollingWindowChangesListeners.add(ai);
+                rollingWindow = new RollingWindow(sensors,5,2000,rollingWindowChangesListeners);
                 // save prev data if available
                 started = true;
-                sm.registerListener(this, asm, SensorManager.SENSOR_DELAY_FASTEST);
-                sm.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST);
                 break;
             case R.id.btnStop:
                 btnStart.setEnabled(true);
                 btnStop.setEnabled(false);
                 btnUpload.setEnabled(true);
                 started = false;
-                sm.unregisterListener(this);
+                sensors.stopCollectingData();
                 layout.removeAllViews();
                 openChart();
-
                 // show data in chart
                 break;
             case R.id.btnUpload:

@@ -13,7 +13,7 @@ import java.util.ArrayList;
  */
 
 
-public class Calibrator extends Thread {
+public class Calibrator extends Thread implements RollingWindowChanges{
 
     private final float GYROSCOPE_MEAN_MAX_ROTATION_NOT_MOVING = 0.01f;
     private final float GYROSCOPE_VARIANCE_MAX_ROTATION_NOT_MOVING = 0.005f;
@@ -132,5 +132,10 @@ public class Calibrator extends Thread {
         float[] accelerometerMeans = getMeansVector3(arrayAccelerometerValues);
         float[] magnetometerMeans = getMeansVector3(arrayMagnetometerValues);
         return SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerMeans, magnetometerMeans);
+    }
+
+    @Override
+    public void rollingWindowHasRepresentativelyChanged(float[][][] snapshot3Windows) {
+
     }
 }
