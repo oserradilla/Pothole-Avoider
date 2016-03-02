@@ -95,8 +95,10 @@ public class MainActivity extends Activity implements
                 sensorData = new ArrayList();
                 sensors.startCollectingData();
                 AI ai = new AI();
+                Calibrator calibrator = new Calibrator(ai);
                 ArrayList<RollingWindowChanges> rollingWindowChangesListeners = new ArrayList<>();
                 rollingWindowChangesListeners.add(ai);
+                rollingWindowChangesListeners.add(calibrator);
                 rollingWindow = new RollingWindow(sensors,5,2000,rollingWindowChangesListeners);
                 // save prev data if available
                 started = true;
@@ -107,8 +109,8 @@ public class MainActivity extends Activity implements
                 btnUpload.setEnabled(true);
                 started = false;
                 sensors.stopCollectingData();
-                layout.removeAllViews();
-                openChart();
+                /*layout.removeAllViews();
+                openChart();*/
                 // show data in chart
                 break;
             case R.id.btnUpload:
