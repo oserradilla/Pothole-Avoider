@@ -164,7 +164,7 @@ public class MainActivity extends Activity implements SensorEventListener,
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btnStart:
-                fileWriter.restart();
+                fileWriter.openNewFile();
                 btnStart.setEnabled(false);
                 btnStop.setEnabled(true);
                 btnUpload.setEnabled(false);
@@ -182,7 +182,7 @@ public class MainActivity extends Activity implements SensorEventListener,
                 sm.unregisterListener(this);
                 layout.removeAllViews();
                 openChart();
-                fileWriter.writeToFile();
+                fileWriter.closeFile();
                 // show data in chart
                 break;
             case R.id.btnUpload:

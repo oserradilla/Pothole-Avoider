@@ -5,14 +5,20 @@ import android.os.Environment;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * Created by oscar on 23/02/2016.
  */
 public class FileWriter {
     private boolean isStartOfLine = true;
-    private String stringToSave = "";
+    private String newLineToSaveToFile = "";
+
+    private String newFileName = "";
+    private OutputStream fileOutputStream = null;
 
     private Context context;
 
@@ -20,54 +26,70 @@ public class FileWriter {
         this.context = context;
     }
 
-    public void restart() {
-        stringToSave = "";
-        isStartOfLine = true;
+    public void openNewFile() {
+        if (fileOutputStream != null) {
+            closeFile();
+        }
+        String baseFolder = "";
+        // check if external storage is available
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            try {
+                baseFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getCanonicalPath();
+            } catch (IOException e) {
+                Toast.makeText(context, "Error creating file", Toast.LENGTH_LONG).show();
+            }
+        }
+        // revert to using internal storage (not sure if there's an equivalent to the above)
+        else {
+            baseFolder = context.getFilesDir().getAbsolutePath();
+        }
+        File newTestFile;
+        int idTest = 1;
+        do {
+            newFileName = "test" + String.valueOf(idTest++) + ".txt";
+            newTestFile = new File(baseFolder + File.separator + "sensors"
+                    + File.separator + newFileName);
+        } while(newTestFile.exists());
+        newTestFile.setReadable(true);
+        newTestFile.getParentFile().mkdirs();
+        try {
+            fileOutputStream = new FileOutputStream(newTestFile);
+        } catch (FileNotFoundException e) {
+            Toast.makeText(context, "File not found", Toast.LENGTH_LONG).show();
+        }
     }
 
     public void setFloat(float number) {
         if (!isStartOfLine) {
-            stringToSave += ",";
+            newLineToSaveToFile += ",";
         } else {
             isStartOfLine = false;
         }
-        stringToSave += String.valueOf(number);
+        newLineToSaveToFile += String.valueOf(number);
     }
 
     public void nextLine() {
-        stringToSave += "\n";
-        isStartOfLine = true;
+        newLineToSaveToFile += "\n";
+        try {
+            fileOutputStream.write(newLineToSaveToFile.getBytes());
+            newLineToSaveToFile = "";
+            isStartOfLine = true;
+        } catch (IOException e) {
+            Toast.makeText(context, "Error writing to file", Toast.LENGTH_LONG).show();
+        }
     }
 
-    public void writeToFile() {
+    public void closeFile() {
         try {
-            String baseFolder;
-// check if external storage is available
-            if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                baseFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getCanonicalPath();
+            if (fileOutputStream != null) {
+                fileOutputStream.flush();
+                fileOutputStream.close();
+                fileOutputStream = null;
+                Toast.makeText(context, "Test saved at " + newFileName , Toast.LENGTH_LONG).show();
             }
-// revert to using internal storage (not sure if there's an equivalent to the above)
-            else {
-                baseFolder = context.getFilesDir().getAbsolutePath();
-            }
-            String newFileName = "";
-            File newTestFile;
-            int idTest = 1;
-            do {
-                newFileName = "test" + String.valueOf(idTest++) + ".txt";
-                newTestFile = new File(baseFolder + File.separator + "sensors"
-                        + File.separator + newFileName);
-            } while(newTestFile.exists());
-            newTestFile.setReadable(true);
-            newTestFile.getParentFile().mkdirs();
-            FileOutputStream fos = new FileOutputStream(newTestFile);
-            fos.write(stringToSave.getBytes());
-            fos.flush();
-            fos.close();
-            Toast.makeText(context, "File " + newFileName + " created correctly", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(context, "File error writing at file", Toast.LENGTH_LONG);
+            Toast.makeText(context, "Error closing file", Toast.LENGTH_LONG).show();
         }
     }
 }
