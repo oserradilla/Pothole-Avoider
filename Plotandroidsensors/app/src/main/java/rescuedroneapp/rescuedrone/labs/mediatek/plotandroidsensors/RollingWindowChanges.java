@@ -5,4 +5,5 @@ package rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors;
  */
 public interface RollingWindowChanges {
     void rollingWindowHasRepresentativelyChanged(float[][][] snapshot3Windows);
+    void rollingWindowHasCompletelyChanged(float[][][] snapshot3Windows);
 }

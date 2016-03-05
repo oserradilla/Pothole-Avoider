@@ -13,6 +13,11 @@ public class AI implements DevicePositionChangedListener, RollingWindowChanges{
     }
 
     @Override
+    public void rollingWindowHasCompletelyChanged(float[][][] snapshot3Windows) {
+
+    }
+
+    @Override
     public void onDevicePositionChanged(float[] rotationMatrix) {
         Log.v("onDevicePositionChanged","onDevicePositionChanged");
     }

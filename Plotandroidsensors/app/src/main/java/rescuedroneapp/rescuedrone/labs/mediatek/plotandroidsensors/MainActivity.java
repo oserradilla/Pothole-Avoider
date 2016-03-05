@@ -17,6 +17,8 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
+import logger.WindowLogger;
+
 public class MainActivity extends Activity implements
         OnClickListener {
 
@@ -35,6 +37,7 @@ public class MainActivity extends Activity implements
 
     private Sensors sensors;
     private RollingWindow rollingWindow;
+    private WindowLogger windowLogger;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -94,11 +97,16 @@ public class MainActivity extends Activity implements
                 btnUpload.setEnabled(false);
                 sensorData = new ArrayList();
                 sensors.startCollectingData();
+                windowLogger = new WindowLogger(this);
                 AI ai = new AI();
-                Calibrator calibrator = new Calibrator(ai);
+                ArrayList<DevicePositionChangedListener> devicePositionChangedListeners = new ArrayList<>();
+                devicePositionChangedListeners.add(ai);
+                devicePositionChangedListeners.add(windowLogger);
+                Calibrator calibrator = new Calibrator(devicePositionChangedListeners);
                 ArrayList<RollingWindowChanges> rollingWindowChangesListeners = new ArrayList<>();
                 rollingWindowChangesListeners.add(ai);
                 rollingWindowChangesListeners.add(calibrator);
+                rollingWindowChangesListeners.add(windowLogger);
                 rollingWindow = new RollingWindow(sensors,5,2000,rollingWindowChangesListeners);
                 // save prev data if available
                 started = true;
@@ -109,6 +117,7 @@ public class MainActivity extends Activity implements
                 btnUpload.setEnabled(true);
                 started = false;
                 sensors.stopCollectingData();
+                windowLogger.endLogging();
                 /*layout.removeAllViews();
                 openChart();*/
                 // show data in chart

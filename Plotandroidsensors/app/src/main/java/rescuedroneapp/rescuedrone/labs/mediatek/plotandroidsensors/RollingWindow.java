@@ -89,6 +89,12 @@ public class RollingWindow{
                 if (!hasBeenFilled) {
                     hasBeenFilled = newWindowPosition == 0;
                 }
+                if (newWindowPosition == 0) {
+                    float[][][] completeSnapshotOf3Windows = snapshotOf3Windows();
+                    for(RollingWindowChanges rollingWindowChangesListener: rollingWindowChangesListeners) {
+                        rollingWindowChangesListener.rollingWindowHasCompletelyChanged(completeSnapshotOf3Windows);
+                    }
+                }
             }
         }
     }

@@ -20,15 +20,15 @@ public class Calibrator extends Thread implements RollingWindowChanges{
 
     private final float ACCELEROMETER_VARIANCE_MAX_ROTATION_NOT_MOVING = 0.1f;
 
-    private DevicePositionChangedListener devicePositionChangedListener;
+    private ArrayList<DevicePositionChangedListener> devicePositionChangedListeners;
 
     private float[] rotationMatrix = new float[9];
 
     private long timestampOfLastAnalyses = 0;
     private final int MIN_TIME_BETWEEN_ANALYSES = 1000; //ms
 
-    public Calibrator (DevicePositionChangedListener devicePositionChangedListener) {
-        this.devicePositionChangedListener = devicePositionChangedListener;
+    public Calibrator (ArrayList<DevicePositionChangedListener> devicePositionChangedListeners) {
+        this.devicePositionChangedListeners = devicePositionChangedListeners;
     }
 
 
@@ -41,6 +41,11 @@ public class Calibrator extends Thread implements RollingWindowChanges{
                     snapshot3Windows[0], snapshot3Windows[1], snapshot3Windows[2]);
             calibratorAnalysisThread.start();
         }
+    }
+
+    @Override
+    public void rollingWindowHasCompletelyChanged(float[][][] snapshot3Windows) {
+
     }
 
     private class CalibratorAnalysisThread extends Thread {
@@ -65,7 +70,9 @@ public class Calibrator extends Thread implements RollingWindowChanges{
                 if (!isDeviceRotating()) {
                     if (!isDeviceAccelerating()) {
                         if(calulateRotationMatrix()) {
-                            devicePositionChangedListener.onDevicePositionChanged(rotationMatrix);
+                            for (DevicePositionChangedListener devicePositionChangedListener: devicePositionChangedListeners) {
+                                devicePositionChangedListener.onDevicePositionChanged(rotationMatrix);
+                            }
                         }
                     }
                 }
