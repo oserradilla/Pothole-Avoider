@@ -1,6 +1,9 @@
 package logger;
 
 import android.content.Context;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -52,8 +55,21 @@ public class WindowLogger implements RollingWindowChanges, DevicePositionChanged
     @Override
     public void onDevicePositionChanged(float[] rotationMatrix) {
         rotationMatrixLock.lock();
+        if (this.rotationMatrix == null) {
+            newUserNotification();
+        }
         this.rotationMatrix = rotationMatrix;
         rotationMatrixLock.unlock();
+    }
+
+    private void newUserNotification() {
+        try {
+            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Ringtone r = RingtoneManager.getRingtone(context, notification);
+            r.play();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void endLogging() {
@@ -62,6 +78,8 @@ public class WindowLogger implements RollingWindowChanges, DevicePositionChanged
         fileWriter = null;
         fileWriterLock.unlock();
     }
+
+
 
     private class FileWriterControllerThread extends Thread {
 
