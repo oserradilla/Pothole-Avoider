@@ -4,9 +4,6 @@ import android.content.Context;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.Looper;
-import android.util.Log;
-import android.widget.Toast;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -49,11 +46,11 @@ public class WindowLogger implements RollingWindowChanges, DevicePositionChanged
             rotationMatrixCopy = rotationMatrix.clone();
         }
         rotationMatrixLock.unlock();
-        if (rotationMatrixCopy != null) {
+        //if (rotationMatrixCopy != null) {
             this.snapshot3Windows = snapshot3Windows;
             FileWriterControllerThread fileWriterControllerThread = new FileWriterControllerThread(context, rotationMatrixCopy);
             fileWriterControllerThread.start();
-        }
+        //}
     }
 
     @Override
@@ -97,12 +94,12 @@ public class WindowLogger implements RollingWindowChanges, DevicePositionChanged
         @Override
         public void run() {
             long startTimestamp = System.currentTimeMillis();
-            float[][] accelerometerWindowInRealWorld = getVector3WindowInRealWorld(snapshot3Windows[0],rotationMatrix);
-            float[][] gyroscopeWindowInRealWorld = getVector3WindowInRealWorld(snapshot3Windows[1],rotationMatrix);
+            //float[][] accelerometerWindowInRealWorld = getVector3WindowInRealWorld(snapshot3Windows[0],rotationMatrix);
+            //float[][] gyroscopeWindowInRealWorld = getVector3WindowInRealWorld(snapshot3Windows[1],rotationMatrix);
             fileWriterLock.lock();
             if (fileWriter != null) {
-                saveAccelerometerAndGyroscopeWindowsToFileTransformedToInRealWorldToFile(
-                        accelerometerWindowInRealWorld, gyroscopeWindowInRealWorld);
+                saveAccelerometerAndGyroscopeWindowsToFile(
+                        snapshot3Windows[0], snapshot3Windows[1]);
             }
             fileWriterLock.unlock();
             long endTimestamp = System.currentTimeMillis();
@@ -120,7 +117,7 @@ public class WindowLogger implements RollingWindowChanges, DevicePositionChanged
             return vector3WindowInRealWorld;
         }
 
-        private void saveAccelerometerAndGyroscopeWindowsToFileTransformedToInRealWorldToFile(
+        private void saveAccelerometerAndGyroscopeWindowsToFile(
                 float[][] accelerometerWindowInRealWorld, float[][] gyroscopeWindowInRealWorld) {
             int lengthToSave = accelerometerWindowInRealWorld.length > gyroscopeWindowInRealWorld.length ?
                     gyroscopeWindowInRealWorld.length : accelerometerWindowInRealWorld.length;
