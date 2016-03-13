@@ -21,15 +21,13 @@ public class FileWriter {
     private OutputStream fileOutputStream = null;
 
     private Context context;
+    private int lines = 0;
 
     public FileWriter(Context context) {
         this.context = context;
     }
 
     public void openNewFile() {
-        if (fileOutputStream != null) {
-            closeFile();
-        }
         String baseFolder = "";
         // check if external storage is available
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
@@ -69,6 +67,7 @@ public class FileWriter {
     }
 
     public void nextLine() {
+        lines++;
         newLineToSaveToFile += "\n";
         try {
             fileOutputStream.write(newLineToSaveToFile.getBytes());
@@ -84,8 +83,8 @@ public class FileWriter {
             if (fileOutputStream != null) {
                 fileOutputStream.flush();
                 fileOutputStream.close();
-                fileOutputStream = null;
-                Toast.makeText(context, "Test saved at " + newFileName , Toast.LENGTH_LONG).show();
+                //Toast.makeText(context, "Test saved at " + newFileName , Toast.LENGTH_LONG).show();
+                Toast.makeText(context, "Number of lines sent to outputstream: " + String.valueOf(lines) , Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             e.printStackTrace();

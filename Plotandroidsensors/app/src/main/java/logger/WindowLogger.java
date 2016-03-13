@@ -4,10 +4,14 @@ import android.content.Context;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Looper;
+import android.util.Log;
+import android.widget.Toast;
 
 import java.util.concurrent.locks.ReentrantLock;
 
 import rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors.DevicePositionChangedListener;
+import rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors.MainActivity;
 import rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors.RollingWindowChanges;
 
 /**
@@ -75,7 +79,6 @@ public class WindowLogger implements RollingWindowChanges, DevicePositionChanged
     public void endLogging() {
         fileWriterLock.lock();
         fileWriter.closeFile();
-        fileWriter = null;
         fileWriterLock.unlock();
     }
 
@@ -84,13 +87,16 @@ public class WindowLogger implements RollingWindowChanges, DevicePositionChanged
     private class FileWriterControllerThread extends Thread {
 
         private float[] rotationMatrix;
+        private Context context;
 
         private FileWriterControllerThread (Context context, float[] rotationMatrix) {
             this.rotationMatrix = rotationMatrix;
+            this.context = context;
         }
 
         @Override
         public void run() {
+            long startTimestamp = System.currentTimeMillis();
             float[][] accelerometerWindowInRealWorld = getVector3WindowInRealWorld(snapshot3Windows[0],rotationMatrix);
             float[][] gyroscopeWindowInRealWorld = getVector3WindowInRealWorld(snapshot3Windows[1],rotationMatrix);
             fileWriterLock.lock();
@@ -99,6 +105,9 @@ public class WindowLogger implements RollingWindowChanges, DevicePositionChanged
                         accelerometerWindowInRealWorld, gyroscopeWindowInRealWorld);
             }
             fileWriterLock.unlock();
+            long endTimestamp = System.currentTimeMillis();
+            long difference = endTimestamp - startTimestamp;
+            ((MainActivity) context).showToast(String.valueOf(difference));
         }
 
         private float[][] getVector3WindowInRealWorld(float[][] vector3Window, float[] rotationMatrix) {
