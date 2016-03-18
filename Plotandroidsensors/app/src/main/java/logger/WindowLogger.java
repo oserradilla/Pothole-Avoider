@@ -59,9 +59,10 @@ public class WindowLogger implements RollingWindowChanges, DevicePositionChanged
     @Override
     public void onDevicePositionChanged(float[] rotationMatrix) {
         rotationMatrixLock.lock();
-        if (this.rotationMatrix == null) {
+        //+
+        // if (this.rotationMatrix == null) {
             newUserNotification();
-        }
+        //}
         this.rotationMatrix = rotationMatrix;
         rotationMatrixLock.unlock();
     }

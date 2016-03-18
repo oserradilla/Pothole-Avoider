@@ -16,9 +16,9 @@ import java.util.ArrayList;
 public class Calibrator extends Thread implements RollingWindowChanges{
 
     private final float GYROSCOPE_MEAN_MAX_ROTATION_NOT_MOVING = 0.01f;
-    private final float GYROSCOPE_VARIANCE_MAX_ROTATION_NOT_MOVING = 0.005f;
+    private final float GYROSCOPE_VARIANCE_MAX_ROTATION_NOT_MOVING = 0.001f;
 
-    private final float ACCELEROMETER_VARIANCE_MAX_ROTATION_NOT_MOVING = 0.1f;
+    private final float ACCELEROMETER_VARIANCE_MAX_ROTATION_NOT_MOVING = 0.2f;
 
     private ArrayList<DevicePositionChangedListener> devicePositionChangedListeners;
 
