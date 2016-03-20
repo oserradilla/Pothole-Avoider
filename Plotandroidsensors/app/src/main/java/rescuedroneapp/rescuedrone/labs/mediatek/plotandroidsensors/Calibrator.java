@@ -3,6 +3,9 @@ package rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors;
 import android.hardware.SensorManager;
 
 import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by oscar on 29/02/2016.
@@ -13,151 +16,187 @@ import java.util.ArrayList;
  */
 
 
-public class Calibrator extends Thread implements RollingWindowChanges{
-
-    private final float GYROSCOPE_MEAN_MAX_ROTATION_NOT_MOVING = 0.01f;
-    private final float GYROSCOPE_VARIANCE_MAX_ROTATION_NOT_MOVING = 0.005f;
-
-    private final float ACCELEROMETER_VARIANCE_MAX_ROTATION_NOT_MOVING = 0.1f;
+public class Calibrator extends Thread implements RollingWindowChangesListener {
 
     private ArrayList<DevicePositionChangedListener> devicePositionChangedListeners;
 
-    private float[] rotationMatrix = new float[9];
+    private final int MIN_WINDOW_SIZE_TO_CALIBRATE = 10000;
 
-    private long timestampOfLastAnalyses = 0;
-    private final int MIN_TIME_BETWEEN_ANALYSES = 1000; //ms
+    private float[] lastAccelzMeansRealWorld = null;
+    Lock lastAccelzMeansRealWorldLock;
+    private int sizeOfWindowSizeToCalibrate;
+    private int idxOfWindowSizeToCalibrate = 0;
+    private Lock idxOfWindowSizeToCalibrateLock;
+    private boolean windowSizeToCalibrateIsInitialized;
+    private float[][] lastCalculusDeviceWorld;
+    Lock lastCalculusDeviceWorldLock;
+    Semaphore newRollingWindowDeviceWorldCalculusSemaphore;
+    Semaphore newRollingWindowRealWorldCalculusSemaphore;
+    private Boolean deviceWorldCalculusArrived = false;
+    private Boolean realWorldCalculusArrived = false;
+    private Semaphore waitUntilBothCalculusArrivedSemaphore;
 
-    public Calibrator (ArrayList<DevicePositionChangedListener> devicePositionChangedListeners) {
+    public Calibrator (int windowFrequency, ArrayList<DevicePositionChangedListener> devicePositionChangedListeners) {
         this.devicePositionChangedListeners = devicePositionChangedListeners;
+        sizeOfWindowSizeToCalibrate = MIN_WINDOW_SIZE_TO_CALIBRATE / windowFrequency;
+        sizeOfWindowSizeToCalibrate = sizeOfWindowSizeToCalibrate < (float) MIN_WINDOW_SIZE_TO_CALIBRATE/windowFrequency ?
+                sizeOfWindowSizeToCalibrate + 1 : sizeOfWindowSizeToCalibrate;
+        lastAccelzMeansRealWorld = new float[sizeOfWindowSizeToCalibrate];
+        lastCalculusDeviceWorld = new float[sizeOfWindowSizeToCalibrate][6];
+        windowSizeToCalibrateIsInitialized = sizeOfWindowSizeToCalibrate == 1;
+        lastCalculusDeviceWorldLock = new ReentrantLock();
+        lastAccelzMeansRealWorldLock = new ReentrantLock();
+        idxOfWindowSizeToCalibrateLock = new ReentrantLock();
+        newRollingWindowDeviceWorldCalculusSemaphore = new Semaphore(1);
+        newRollingWindowRealWorldCalculusSemaphore = new Semaphore(1);
+        waitUntilBothCalculusArrivedSemaphore = new Semaphore(0);
     }
 
-
     @Override
-    public void rollingWindowHasRepresentativelyChanged(float[][][] snapshot3Windows) {
-        long currentTimestamp = System.currentTimeMillis();
-        if (currentTimestamp - timestampOfLastAnalyses >= MIN_TIME_BETWEEN_ANALYSES) {
-            timestampOfLastAnalyses = currentTimestamp;
-            CalibratorAnalysisThread calibratorAnalysisThread = new CalibratorAnalysisThread(
-                    snapshot3Windows[0], snapshot3Windows[1], snapshot3Windows[2]);
-            calibratorAnalysisThread.start();
+    public void newRollingWindowDeviceWorldCalculus(float[][] calculusMatrix) {
+        try {
+            newRollingWindowDeviceWorldCalculusSemaphore.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        lastCalculusDeviceWorldLock.lock();
+        idxOfWindowSizeToCalibrateLock.lock();
+        lastCalculusDeviceWorld[idxOfWindowSizeToCalibrate][0]=calculusMatrix[0][0];
+        lastCalculusDeviceWorld[idxOfWindowSizeToCalibrate][1]=calculusMatrix[0][1];
+        lastCalculusDeviceWorld[idxOfWindowSizeToCalibrate][2]=calculusMatrix[0][2];
+        lastCalculusDeviceWorld[idxOfWindowSizeToCalibrate][3]=calculusMatrix[0][6];
+        lastCalculusDeviceWorld[idxOfWindowSizeToCalibrate][4]=calculusMatrix[0][7];
+        lastCalculusDeviceWorld[idxOfWindowSizeToCalibrate][5]=calculusMatrix[0][8];
+        idxOfWindowSizeToCalibrateLock.unlock();
+        lastCalculusDeviceWorldLock.unlock();
+        synchronized (deviceWorldCalculusArrived) {
+            synchronized (realWorldCalculusArrived){
+                if (realWorldCalculusArrived) {
+                    realWorldCalculusArrived = false;
+                    deviceWorldCalculusArrived = false;
+                    waitUntilBothCalculusArrivedSemaphore.release();
+                } else {
+                    deviceWorldCalculusArrived = true;
+                }
+            }
         }
     }
 
     @Override
-    public void rollingWindowHasCompletelyChanged(float[][][] snapshot3Windows) {
-
+    public void newRollingWindowRealWorldCalculus(float[][] calculusMatrix) {
+        try {
+            newRollingWindowRealWorldCalculusSemaphore.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        lastAccelzMeansRealWorldLock.lock();
+        idxOfWindowSizeToCalibrateLock.lock();
+        lastAccelzMeansRealWorld[idxOfWindowSizeToCalibrate]=calculusMatrix[0][2];
+        idxOfWindowSizeToCalibrateLock.unlock();
+        lastAccelzMeansRealWorldLock.unlock();
+        synchronized (deviceWorldCalculusArrived) {
+            synchronized (realWorldCalculusArrived){
+                if (deviceWorldCalculusArrived) {
+                    deviceWorldCalculusArrived = false;
+                    realWorldCalculusArrived = false;
+                    waitUntilBothCalculusArrivedSemaphore.release();
+                } else {
+                    realWorldCalculusArrived = true;
+                }
+            }
+        }
     }
 
-    private class CalibratorAnalysisThread extends Thread {
+    // To skip the first window arrived after recalculation of the rotation matrix (because there will be some data belonging to the previous rotation matrix so should be skipped
+    private boolean firstWindowSkipped = false;
 
-        private float[][] arrayAccelerometerValues;
-        private float[][] arrayGyroscopeValues;
-        private float[][] arrayMagnetometerValues;
-
-        public CalibratorAnalysisThread (float[][] arrayAccelerometerValues,
-                                         float[][] arrayGyroscopeValues,
-                                         float[][] arrayMagnetometerValues) {
-            this.arrayAccelerometerValues = arrayAccelerometerValues;
-            this.arrayGyroscopeValues = arrayGyroscopeValues;
-            this.arrayMagnetometerValues = arrayMagnetometerValues;
-        }
-
-        @Override
-        public void run() {
-            if (arrayAccelerometerValues.length != 0
-                    && arrayGyroscopeValues.length != 0
-                    && arrayMagnetometerValues.length != 0) {
-                if (!isDeviceRotating()) {
-                    if (!isDeviceAccelerating()) {
-                        if(calulateRotationMatrix()) {
-                            for (DevicePositionChangedListener devicePositionChangedListener: devicePositionChangedListeners) {
-                                devicePositionChangedListener.onDevicePositionChanged(rotationMatrix);
-                            }
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                waitUntilBothCalculusArrivedSemaphore.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            idxOfWindowSizeToCalibrateLock.lock();
+            idxOfWindowSizeToCalibrate = (idxOfWindowSizeToCalibrate+1) % sizeOfWindowSizeToCalibrate;
+            if (windowSizeToCalibrateIsInitialized) {
+                if (deviceHasToBeCalibrated()) {
+                    float[] rotationMatrix = calulateRotationMatrix();
+                    if (rotationMatrix != null) {
+                        for (DevicePositionChangedListener devicePositionChangedListener : devicePositionChangedListeners) {
+                            devicePositionChangedListener.onDevicePositionChanged(rotationMatrix);
                         }
+                        idxOfWindowSizeToCalibrate = 0;
+                        windowSizeToCalibrateIsInitialized = false;
+                        firstWindowSkipped = false;
                     }
                 }
-            }
-        }
-
-        private boolean isDeviceRotating() {
-            boolean isRotating = true;
-            float[] gyroscopeMeans = getMeansVector3(arrayGyroscopeValues);
-            if (isVector3InRange(gyroscopeMeans, GYROSCOPE_MEAN_MAX_ROTATION_NOT_MOVING)) {
-                float[] gyroscopeVariances = getVariancesVector3(gyroscopeMeans, arrayGyroscopeValues);
-                if (isVector3InRange(gyroscopeVariances, GYROSCOPE_VARIANCE_MAX_ROTATION_NOT_MOVING)) {
-                    isRotating = false;
+            } else {
+                if (!firstWindowSkipped) {
+                    firstWindowSkipped = true;
+                    idxOfWindowSizeToCalibrate = idxOfWindowSizeToCalibrate-1 < 0 ? 0 : idxOfWindowSizeToCalibrate-1;
+                } else {
+                    windowSizeToCalibrateIsInitialized = idxOfWindowSizeToCalibrate == 0;
                 }
             }
-            return isRotating;
-        }
-
-        // Mean not compared because we cannot know the range in which they will be moving
-        private boolean isDeviceAccelerating() {
-            boolean isAccelerating = true;
-            float[] accelerometerMeans = getMeansVector3(arrayAccelerometerValues);
-            float[] accelerometerVariances = getVariancesVector3(accelerometerMeans, arrayAccelerometerValues);
-            if (isVector3InRange(accelerometerVariances, ACCELEROMETER_VARIANCE_MAX_ROTATION_NOT_MOVING)) {
-                isAccelerating = false;
-            }
-            return isAccelerating;
-        }
-
-        private float[] getMeansVector3(float[][] arrayVector3Values) {
-            float xSum = 0.0f;
-            float ySum = 0.0f;
-            float zSum = 0.0f;
-            for(float[] vector3Reading: arrayVector3Values) {
-                xSum += vector3Reading[0];
-                ySum += vector3Reading[1];
-                zSum += vector3Reading[2];
-            }
-            float[] meansVector3 = new float[3];
-            meansVector3[0] = xSum/arrayVector3Values.length;
-            meansVector3[1] = ySum/arrayVector3Values.length;
-            meansVector3[2] = zSum/arrayVector3Values.length;
-            return meansVector3;
-        }
-
-        private float[] getVariancesVector3(float[] meansVector3,
-                                            float[][] arrayVector3Values) {
-            float xiMinusMeanXTwoSquaredSum = 0.0f;
-            float yiMinusMeanYTwoSquaredSum = 0.0f;
-            float ziMinusMeanZTwoSquaredSum = 0.0f;
-            for(float[] vector3Reading: arrayVector3Values) {
-                xiMinusMeanXTwoSquaredSum +=
-                        Math.pow(vector3Reading[0] - meansVector3[0], 2);
-                yiMinusMeanYTwoSquaredSum +=
-                        Math.pow(vector3Reading[1] - meansVector3[1], 2);
-                ziMinusMeanZTwoSquaredSum +=
-                        Math.pow(vector3Reading[2] - meansVector3[2], 2);
-            }
-            float[] variancesVector3 = new float[3];
-            variancesVector3[0] = xiMinusMeanXTwoSquaredSum/arrayVector3Values.length;
-            variancesVector3[1] = yiMinusMeanYTwoSquaredSum/arrayVector3Values.length;
-            variancesVector3[2] = ziMinusMeanZTwoSquaredSum/arrayVector3Values.length;
-            return variancesVector3;
-        }
-
-
-        private boolean isVector3InRange (float[] vector3, float range) {
-            boolean isInRange = false;
-            if (vector3[0] < range
-                    && vector3[0] > -range) {
-                if (vector3[1] < range
-                        && vector3[1] > -range) {
-                    if (vector3[2] < range
-                            && vector3[2] > -range) {
-                        isInRange = true;
-                    }
-                }
-            }
-            return isInRange;
-        }
-
-        private boolean calulateRotationMatrix() {
-            float[] accelerometerMeans = getMeansVector3(arrayAccelerometerValues);
-            float[] magnetometerMeans = getMeansVector3(arrayMagnetometerValues);
-            return SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerMeans, magnetometerMeans);
+            idxOfWindowSizeToCalibrateLock.unlock();
+            newRollingWindowDeviceWorldCalculusSemaphore.release();
+            newRollingWindowRealWorldCalculusSemaphore.release();
         }
     }
+
+    private float[] calulateRotationMatrix() {
+        float[][] accelerometerMagnetometerMeans = getAccelerometerMagnetometerMeans();
+        float[] rotationMatrix = new float[9];
+        boolean isCorrect = SensorManager.getRotationMatrix(rotationMatrix, null,
+                accelerometerMagnetometerMeans[0], accelerometerMagnetometerMeans[1]);
+        if (!isCorrect) {
+            rotationMatrix = null;
+        }
+        return rotationMatrix;
+    }
+
+    private float[][] getAccelerometerMagnetometerMeans() {
+        float[][] accelerometerMagnetometerMeans = new float[][]{
+                {0.0f, 0.0f, 0.0f},
+                {0.0f, 0.0f, 0.0f}
+        };
+        lastCalculusDeviceWorldLock.lock();
+        for(int i = 0; i < sizeOfWindowSizeToCalibrate; i++) {
+            accelerometerMagnetometerMeans[0][0] += lastCalculusDeviceWorld[i][0];
+            accelerometerMagnetometerMeans[0][1] += lastCalculusDeviceWorld[i][1];
+            accelerometerMagnetometerMeans[0][2] += lastCalculusDeviceWorld[i][2];
+            accelerometerMagnetometerMeans[1][0] += lastCalculusDeviceWorld[i][3];
+            accelerometerMagnetometerMeans[1][1] += lastCalculusDeviceWorld[i][4];
+            accelerometerMagnetometerMeans[1][2] += lastCalculusDeviceWorld[i][5];
+        }
+        lastCalculusDeviceWorldLock.unlock();
+        accelerometerMagnetometerMeans[0][0] /= sizeOfWindowSizeToCalibrate;
+        accelerometerMagnetometerMeans[0][1] /= sizeOfWindowSizeToCalibrate;
+        accelerometerMagnetometerMeans[0][2] /= sizeOfWindowSizeToCalibrate;
+        accelerometerMagnetometerMeans[1][0] /= sizeOfWindowSizeToCalibrate;
+        accelerometerMagnetometerMeans[1][1] /= sizeOfWindowSizeToCalibrate;
+        accelerometerMagnetometerMeans[1][2] /= sizeOfWindowSizeToCalibrate;
+        return accelerometerMagnetometerMeans;
+    }
+
+    private boolean deviceHasToBeCalibrated() {
+        float sumOfLastAccelzMeans = 0;
+        lastAccelzMeansRealWorldLock.lock();
+        for(int i = 0; i < sizeOfWindowSizeToCalibrate; i++) {
+            sumOfLastAccelzMeans += lastAccelzMeansRealWorld[i];
+        }
+        float meanOfLastAccelzMeans = sumOfLastAccelzMeans / sizeOfWindowSizeToCalibrate;
+        lastAccelzMeansRealWorldLock.unlock();
+        boolean needsCalibration = meanOfLastAccelzMeans < 9.3f || meanOfLastAccelzMeans > 10.3f;
+        return needsCalibration;
+    }
+
+    @Override
+    public void newRollingWindowRawData(float[][][] snapshotOfAccelGyroMagnetoInRawWindows) {}
+
+    @Override
+    public void newRollingWindowTransformedToRealWorld(float[][][] snapshotAccelGyroMagnetoRealWorldWindows) {}
+
 }

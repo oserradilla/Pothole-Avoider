@@ -1,7 +1,5 @@
 package rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -22,22 +20,25 @@ public class RollingWindow{
     private Lock accelerometerWindowLock = new ReentrantLock();
     private Lock gyroscopeWindowLock = new ReentrantLock();
     private Lock magnetometerWindowLock = new ReentrantLock();
+    private Lock newWindowPositionLock = new ReentrantLock();
 
     private boolean hasBeenFilled = false;
     private int newWindowPosition = 0;
 
     SensorsValuesUpdater sensorsValuesUpdater;
-    PeriodicalWindowChangeNotifier periodicalWindowChangeNotifier;
 
     private int WINDOW_SIZE = -1;
+    private int REPRESENTATIVE_CHANGE = -1;
 
-    private ArrayList<RollingWindowChanges> rollingWindowChangesListeners;
+    private ArrayList<RollingWindowChangesListener> rollingWindowChangesListenerListeners;
 
     public RollingWindow(Sensors sensors, int sampleFrequency, int windowFrequency,
-                         ArrayList<RollingWindowChanges> rollingWindowChangesListeners) {
+                         int represtativeChangeFrequency,
+                         ArrayList<RollingWindowChangesListener> rollingWindowChangesListenerListeners) {
         this.sensors = sensors;
         WINDOW_SIZE = windowFrequency/sampleFrequency;
-        this.rollingWindowChangesListeners = rollingWindowChangesListeners;
+        REPRESENTATIVE_CHANGE = represtativeChangeFrequency / sampleFrequency;
+        this.rollingWindowChangesListenerListeners = rollingWindowChangesListenerListeners;
         accelerometerWindow = new float[WINDOW_SIZE][3];
         gyroscopeWindow = new float[WINDOW_SIZE][3];
         magnetometerWindow = new float[WINDOW_SIZE][3];
@@ -45,10 +46,6 @@ public class RollingWindow{
         sensorsValuesUpdater = new SensorsValuesUpdater();
         Timer timerSensorValuesUpdater = new Timer(true);
         timerSensorValuesUpdater.scheduleAtFixedRate(sensorsValuesUpdater, sampleFrequency * 10, sampleFrequency);
-
-        periodicalWindowChangeNotifier = new PeriodicalWindowChangeNotifier();
-        Timer timerPeriodicalWindowChangeNotifier = new Timer(true);
-        timerPeriodicalWindowChangeNotifier.scheduleAtFixedRate(periodicalWindowChangeNotifier, windowFrequency + sampleFrequency * 10, 100);
     }
 
     private float[][][] snapshotOf3Windows() {
@@ -85,31 +82,24 @@ public class RollingWindow{
                 magnetometerWindow[newWindowPosition] = sensors.getLastMagnetometerData();
                 magnetometerWindowLock.unlock();
 
+                newWindowPositionLock.lock();
                 newWindowPosition = (newWindowPosition+1)%WINDOW_SIZE;
                 if (!hasBeenFilled) {
                     hasBeenFilled = newWindowPosition == 0;
                 }
-                if (newWindowPosition == 0) {
-                    float[][][] completeSnapshotOf3Windows = snapshotOf3Windows();
-                    for(RollingWindowChanges rollingWindowChangesListener: rollingWindowChangesListeners) {
-                        rollingWindowChangesListener.rollingWindowHasCompletelyChanged(completeSnapshotOf3Windows);
-                    }
-                }
+                if (newWindowPosition == 0)
+                    new RollingWindowChangesNotifier().start();
+                newWindowPositionLock.unlock();
             }
         }
-    }
 
-    private class PeriodicalWindowChangeNotifier extends TimerTask {
+        private class RollingWindowChangesNotifier extends Thread {
 
-        @Override
-        public void run() {
-            if (sensors.areCollecting()) {
-                long startTimestamp = System.currentTimeMillis();
-                float[][][] snapshot3Windows = snapshotOf3Windows();
-                long endTimestamp = System.currentTimeMillis();
-                Log.v("Tiempo tardado", String.valueOf(endTimestamp - startTimestamp));
-                for(RollingWindowChanges rollingWindowChangesListener: rollingWindowChangesListeners) {
-                    rollingWindowChangesListener.rollingWindowHasRepresentativelyChanged(snapshot3Windows);
+            @Override
+            public void run() {
+                float[][][] snapshotOf3Windows = snapshotOf3Windows();
+                for(RollingWindowChangesListener rollingWindowChangesListenerListener : rollingWindowChangesListenerListeners) {
+                    rollingWindowChangesListenerListener.newRollingWindowRawData(snapshotOf3Windows);
                 }
             }
         }

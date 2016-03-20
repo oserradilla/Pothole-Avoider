@@ -18,7 +18,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import logger.WindowLogger;
+import logger.AppNotifications;
+import logger.WindowLoggerListener;
 
 public class MainActivity extends Activity implements
         OnClickListener {
@@ -38,7 +39,7 @@ public class MainActivity extends Activity implements
 
     private Sensors sensors;
     private RollingWindow rollingWindow;
-    private WindowLogger windowLogger;
+    private WindowLoggerListener windowLogger;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -93,22 +94,30 @@ public class MainActivity extends Activity implements
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btnStart:
+                int windowFrequency = 2000;
+                int sampleFrequency = 5;
+                int hasRepresentativelyChanged = 100;
                 btnStart.setEnabled(false);
                 btnStop.setEnabled(true);
                 btnUpload.setEnabled(false);
                 sensorData = new ArrayList();
                 sensors.startCollectingData();
-                windowLogger = new WindowLogger(this);
-                AI ai = new AI();
+                windowLogger = new WindowLoggerListener(this);
+                AI ai = new AI(sampleFrequency,windowFrequency,hasRepresentativelyChanged);
                 ArrayList<DevicePositionChangedListener> devicePositionChangedListeners = new ArrayList<>();
-                devicePositionChangedListeners.add(ai);
-                devicePositionChangedListeners.add(windowLogger);
-                Calibrator calibrator = new Calibrator(devicePositionChangedListeners);
-                ArrayList<RollingWindowChanges> rollingWindowChangesListeners = new ArrayList<>();
-                rollingWindowChangesListeners.add(ai);
-                rollingWindowChangesListeners.add(calibrator);
-                rollingWindowChangesListeners.add(windowLogger);
-                rollingWindow = new RollingWindow(sensors,5,2000,rollingWindowChangesListeners);
+                AppNotifications appNotifications = new AppNotifications(this);
+                devicePositionChangedListeners.add(appNotifications);
+                Calibrator calibrator = new Calibrator(windowFrequency, devicePositionChangedListeners);
+                calibrator.start();
+                ArrayList<RollingWindowChangesListener> rollingWindowChangesListenerListeners = new ArrayList<>();
+                rollingWindowChangesListenerListeners.add(calibrator);
+                rollingWindowChangesListenerListeners.add(windowLogger);
+                Preprocessing preprocessing = new Preprocessing(rollingWindowChangesListenerListeners);
+                rollingWindowChangesListenerListeners.add(preprocessing);
+                rollingWindow = new RollingWindow(sensors,sampleFrequency,windowFrequency,hasRepresentativelyChanged, rollingWindowChangesListenerListeners);
+                RealWorldTransformation realWorldTransformation = new RealWorldTransformation(rollingWindowChangesListenerListeners);
+                rollingWindowChangesListenerListeners.add(realWorldTransformation);
+                devicePositionChangedListeners.add(realWorldTransformation);
                 // save prev data if available
                 started = true;
                 break;
