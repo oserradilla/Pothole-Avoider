@@ -110,6 +110,7 @@ public class MainActivity extends Activity implements
                 Calibrator calibrator = new Calibrator(windowFrequency, devicePositionChangedListeners);
                 calibrator.start();
                 ArrayList<RollingWindowChangesListener> rollingWindowChangesListenerListeners = new ArrayList<>();
+                rollingWindowChangesListenerListeners.add(appNotifications);
                 rollingWindowChangesListenerListeners.add(calibrator);
                 rollingWindowChangesListenerListeners.add(windowLogger);
                 Preprocessing preprocessing = new Preprocessing(rollingWindowChangesListenerListeners);
@@ -118,6 +119,8 @@ public class MainActivity extends Activity implements
                 RealWorldTransformation realWorldTransformation = new RealWorldTransformation(rollingWindowChangesListenerListeners);
                 rollingWindowChangesListenerListeners.add(realWorldTransformation);
                 devicePositionChangedListeners.add(realWorldTransformation);
+                FirstThreshold firstThreshold = new FirstThreshold();
+                rollingWindowChangesListenerListeners.add(firstThreshold);
                 // save prev data if available
                 started = true;
                 break;

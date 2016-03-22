@@ -23,15 +23,15 @@ public class Calibrator extends Thread implements RollingWindowChangesListener {
     private final int MIN_WINDOW_SIZE_TO_CALIBRATE = 10000;
 
     private float[] lastAccelzMeansRealWorld = null;
-    Lock lastAccelzMeansRealWorldLock;
+    private Lock lastAccelzMeansRealWorldLock;
     private int sizeOfWindowSizeToCalibrate;
     private int idxOfWindowSizeToCalibrate = 0;
     private Lock idxOfWindowSizeToCalibrateLock;
     private boolean windowSizeToCalibrateIsInitialized;
     private float[][] lastCalculusDeviceWorld;
-    Lock lastCalculusDeviceWorldLock;
-    Semaphore newRollingWindowDeviceWorldCalculusSemaphore;
-    Semaphore newRollingWindowRealWorldCalculusSemaphore;
+    private Lock lastCalculusDeviceWorldLock;
+    private Semaphore newRollingWindowDeviceWorldCalculusSemaphore;
+    private Semaphore newRollingWindowRealWorldCalculusSemaphore;
     private Boolean deviceWorldCalculusArrived = false;
     private Boolean realWorldCalculusArrived = false;
     private Semaphore waitUntilBothCalculusArrivedSemaphore;

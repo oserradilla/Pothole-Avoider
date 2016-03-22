@@ -45,9 +45,9 @@ public class Preprocessing implements RollingWindowChangesListener {
         public float[][] makeCalculus() {
             float[][] calculus = new float[3][9];
             System.arraycopy( getMeansVector3(arrayAccelerometerValues), 0, calculus[0], 0, 3);
-            System.arraycopy( getMeansVector3(arrayGyroscopeValues), 0, calculus[0], 3, 3);
+            System.arraycopy(getMeansVector3(arrayGyroscopeValues), 0, calculus[0], 3, 3);
             System.arraycopy( getMeansVector3(arrayMagnetometerValues), 0, calculus[0], 6, 3);
-            // TODO implement variances calculus[1] and svm gyroscope[2]
+            // TODO implement variances calculus[1]
             //System.arraycopy( getMeansVector3(arrayAccelerometerValues), 0, calculus[0], 0, 3);
 
             return calculus;
@@ -104,10 +104,84 @@ public class Preprocessing implements RollingWindowChangesListener {
             }
             return isInRange;
         }
+
+
+        private float[] getSVMVector3(float[][] arrayVector3Values) {
+            float xPow2, yPow2, zPow2;
+            float[] svmVector = new float[arrayVector3Values.length];
+            for (int i=0; i<arrayVector3Values.length; i++) {
+                xPow2 = (float) Math.pow(arrayVector3Values[i][0], 2);
+                yPow2 = (float) Math.pow(arrayVector3Values[i][1], 2);
+                zPow2 = (float) Math.pow(arrayVector3Values[i][2], 2);
+                svmVector[i] = xPow2 + yPow2 + zPow2;
+            }
+            return svmVector;
+        }
     }
 
     @Override
-    public void newRollingWindowTransformedToRealWorld(float[][][] snapshotAccelGyroMagnetoRealWorldWindows) {}
+    public void newRollingWindowTransformedToRealWorld(float[][][] snapshotAccelGyroMagnetoRealWorldWindows) {
+        new RealWorldCalculatorThread(snapshotAccelGyroMagnetoRealWorldWindows[0],
+                snapshotAccelGyroMagnetoRealWorldWindows[1],
+                snapshotAccelGyroMagnetoRealWorldWindows[2]).start();
+    }
+
+    private class RealWorldCalculatorThread extends Thread{
+
+        private float[][] arrayAccelerometerValues;
+        private float[][] arrayGyroscopeValues;
+        private float[][] arrayMagnetometerValues;
+
+        public RealWorldCalculatorThread (float[][] arrayAccelerometerValues,
+                                 float[][] arrayGyroscopeValues,
+                                 float[][] arrayMagnetometerValues) {
+            this.arrayAccelerometerValues = arrayAccelerometerValues;
+            this.arrayGyroscopeValues = arrayGyroscopeValues;
+            this.arrayMagnetometerValues = arrayMagnetometerValues;
+        }
+
+        @Override
+        public void run() {
+            float[][] calculus = makeRealWorldCalculus();
+            for(RollingWindowChangesListener rollingWindowChangesListenerListener : rollingWindowChangesListenerListeners) {
+                rollingWindowChangesListenerListener.newRollingWindowRealWorldCalculus(calculus);
+            }
+        }
+
+        private float[][] makeRealWorldCalculus() {
+            float[][] realWorldCalculus = new float[3][9];
+            realWorldCalculus[0][2] = getMeanFromMatrixColumnVector(arrayAccelerometerValues, 2);
+            realWorldCalculus[2][0] = getSVMVector3Difference(arrayAccelerometerValues);
+            realWorldCalculus[2][3] = getSVMVector3Difference(arrayGyroscopeValues);
+            return  realWorldCalculus;
+        }
+
+        private float getSVMVector3Difference(float[][] arrayVector3Values) {
+            float xPow2, yPow2, zPow2;
+            float maxSVM = -1;
+            float minSVM = Float.MAX_VALUE;
+            float currentSVMValue;
+            for (int i=0; i<arrayVector3Values.length; i++) {
+                xPow2 = (float) Math.pow(arrayVector3Values[i][0], 2);
+                yPow2 = (float) Math.pow(arrayVector3Values[i][1], 2);
+                zPow2 = (float) Math.pow(arrayVector3Values[i][2], 2);
+                currentSVMValue = xPow2 + yPow2 + zPow2;
+                if (maxSVM < currentSVMValue) {
+                    maxSVM = currentSVMValue;
+                } else if (minSVM > currentSVMValue) {
+                    minSVM = currentSVMValue;
+                }
+            }
+            return maxSVM-minSVM;
+        }
+        private float getMeanFromMatrixColumnVector(float[][] matrix, int columnId) {
+            float sum = 0.0f;
+            for(int i=0; i<matrix.length; i++) {
+                sum += matrix[i][columnId];
+            }
+            return sum/matrix.length;
+        }
+    }
 
     @Override
     public void newRollingWindowDeviceWorldCalculus(float[][] calculusMatrix) {}

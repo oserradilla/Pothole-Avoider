@@ -25,11 +25,6 @@ public class RealWorldTransformation implements RollingWindowChangesListener, De
     }
 
     @Override
-    public void newRollingWindowDeviceWorldCalculus(float[][] calculusMatrix) {
-        new newRollingWindowCalculusTransformNotifyThread(calculusMatrix).start();
-    }
-
-    @Override
     public void onDevicePositionChanged(float[] rotationMatrix) {
         rotationMatrixLock.lock();
         this.rotationMatrix = rotationMatrix;
@@ -65,27 +60,12 @@ public class RealWorldTransformation implements RollingWindowChangesListener, De
         }
     }
 
-    private class newRollingWindowCalculusTransformNotifyThread extends Thread {
-
-        private float[][] calculusMatrix;
-
-        private newRollingWindowCalculusTransformNotifyThread(float[][] calculusMatrix) {
-            this.calculusMatrix = calculusMatrix;
-        }
-
-        @Override
-        public void run() {
-            float[][] newRollingWindowCalculusTransformedToRealWorld = new float[calculusMatrix.length][calculusMatrix[0].length];
-            transform3WindowsToRealWorld(calculusMatrix, newRollingWindowCalculusTransformedToRealWorld);
-            for (RollingWindowChangesListener rollingWindowChangesListenerListener : rollingWindowChangesListenerListeners) {
-                rollingWindowChangesListenerListener.newRollingWindowRealWorldCalculus(newRollingWindowCalculusTransformedToRealWorld);
-            }
-        }
-    }
-
 
     @Override
     public void newRollingWindowTransformedToRealWorld(float[][][] snapshotAccelGyroMagnetoRealWorldWindows) {}
+
+    @Override
+    public void newRollingWindowDeviceWorldCalculus(float[][] calculusMatrix) {}
 
     @Override
     public void newRollingWindowRealWorldCalculus(float[][] calculusMatrix) {}
