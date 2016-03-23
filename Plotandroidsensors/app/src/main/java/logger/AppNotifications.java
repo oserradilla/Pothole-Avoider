@@ -17,27 +17,17 @@ public class AppNotifications implements RollingWindowChangesListener, DevicePos
 
     private Context context;
     private boolean isBeeping;
-    private ToneGenerator incidenceToneGenerator;
+    private static ToneGenerator incidenceToneGenerator;
 
     public AppNotifications(Context context) {
         this.context = context;
         isBeeping = false;
-        incidenceToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 40);
+        incidenceToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 60);
     }
 
     @Override
     public void newRollingWindowRealWorldCalculus(float[][] calculusMatrix) {
-        if (calculusMatrix[2][0] > 6 && calculusMatrix[2][3] < 0.5) {
-            if (!isBeeping) {
-                incidenceToneGenerator.startTone(ToneGenerator.TONE_DTMF_0, 1000000);
-                isBeeping = true;
-            }
-        } else {
-            if (isBeeping) {
-                incidenceToneGenerator.stopTone();
-                isBeeping = false;
-            }
-        }
+
     }
 
     @Override
@@ -56,6 +46,9 @@ public class AppNotifications implements RollingWindowChangesListener, DevicePos
         }
     }
 
+    public static void beep() {
+        incidenceToneGenerator.startTone(ToneGenerator.TONE_DTMF_0, 1000);
+    }
 
 
     @Override
