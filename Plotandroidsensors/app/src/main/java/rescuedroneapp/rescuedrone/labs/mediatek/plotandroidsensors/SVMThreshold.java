@@ -3,7 +3,7 @@ package rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors;
 /**
  * Created by oscar on 21/03/2016.
  */
-public class FirstThreshold implements RollingWindowChangesListener {
+public class SVMThreshold implements RollingWindowChangesListener {
 
     @Override
     public void newRollingWindowRealWorldCalculus(float[][] calculusMatrix) {

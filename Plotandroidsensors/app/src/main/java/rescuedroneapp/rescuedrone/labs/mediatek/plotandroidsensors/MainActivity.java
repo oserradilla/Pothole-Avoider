@@ -119,7 +119,7 @@ public class MainActivity extends Activity implements
                 RealWorldTransformation realWorldTransformation = new RealWorldTransformation(rollingWindowChangesListenerListeners);
                 rollingWindowChangesListenerListeners.add(realWorldTransformation);
                 devicePositionChangedListeners.add(realWorldTransformation);
-                FirstThreshold firstThreshold = new FirstThreshold();
+                SVMThreshold firstThreshold = new SVMThreshold();
                 rollingWindowChangesListenerListeners.add(firstThreshold);
                 // save prev data if available
                 started = true;

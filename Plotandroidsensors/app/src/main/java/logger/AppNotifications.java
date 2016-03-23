@@ -22,7 +22,7 @@ public class AppNotifications implements RollingWindowChangesListener, DevicePos
     public AppNotifications(Context context) {
         this.context = context;
         isBeeping = false;
-        incidenceToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 0);
+        incidenceToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 40);
     }
 
     @Override
