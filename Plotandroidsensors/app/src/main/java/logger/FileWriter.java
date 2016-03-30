@@ -57,6 +57,16 @@ public class FileWriter {
         }
     }
 
+
+    public void setInt(int number) {
+        if (!isStartOfLine) {
+            newLineToSaveToFile += ",";
+        } else {
+            isStartOfLine = false;
+        }
+        newLineToSaveToFile += String.valueOf(number);
+    }
+
     public void setFloat(float number) {
         if (!isStartOfLine) {
             newLineToSaveToFile += ",";
@@ -83,8 +93,7 @@ public class FileWriter {
             if (fileOutputStream != null) {
                 fileOutputStream.flush();
                 fileOutputStream.close();
-                //Toast.makeText(context, "Test saved at " + newFileName , Toast.LENGTH_LONG).show();
-                Toast.makeText(context, "Number of lines sent to outputstream: " + String.valueOf(lines) , Toast.LENGTH_LONG).show();
+                Toast.makeText(context, "Test saved at " + newFileName + "\n With " + String.valueOf(lines) + " lines", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             e.printStackTrace();

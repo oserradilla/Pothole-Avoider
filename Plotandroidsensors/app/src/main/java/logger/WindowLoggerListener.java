@@ -1,13 +1,9 @@
 package logger;
 
 import android.content.Context;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-import rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors.DevicePositionChangedListener;
 import rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors.MainActivity;
 import rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors.RollingWindowChangesListener;
 
@@ -16,15 +12,10 @@ import rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors.RollingWindow
  */
 public class WindowLoggerListener implements RollingWindowChangesListener {
 
-    private Context context;
-
-    private float[][][] snapshot3Windows = null;
-
     private FileWriter fileWriter;
     private ReentrantLock fileWriterLock;
 
     public WindowLoggerListener(Context context) {
-        this.context = context;
         fileWriter = new FileWriter(context);
         fileWriter.openNewFile();
         fileWriterLock = new ReentrantLock();
@@ -37,9 +28,9 @@ public class WindowLoggerListener implements RollingWindowChangesListener {
     }
 
     @Override
-    public void newRollingWindowTransformedToRealWorld(float[][][] snapshotAccelGyroMagnetoRealWorldWindows) {
-        this.snapshot3Windows = snapshotAccelGyroMagnetoRealWorldWindows;
-        FileWriterControllerThread fileWriterControllerThread = new FileWriterControllerThread(context);
+    public void newRollingWindowTransformedToRealWorld(float[][][] snapshotAccelGyroMagnetoRealWorldWindows, int[] snapshotOfSpeedWindow) {
+        FileWriterControllerThread fileWriterControllerThread = new FileWriterControllerThread(
+                snapshotAccelGyroMagnetoRealWorldWindows, snapshotOfSpeedWindow);
         fileWriterControllerThread.start();
     }
 
@@ -50,35 +41,32 @@ public class WindowLoggerListener implements RollingWindowChangesListener {
     public void newRollingWindowRealWorldCalculus(float[][] calculusMatrix) {}
 
     @Override
-    public void newRollingWindowRawData(float[][][] snapshotOfAccelGyroMagnetoInRawWindows) {}
+    public void newRollingWindowRawData(float[][][] snapshotOfAccelGyroMagnetoInRawWindows, int[] snapshotOfSpeedWindow) {}
 
 
     private class FileWriterControllerThread extends Thread {
+        private float[][][] snapshotAccelGyroMagnetoRealWorldWindows = null;
+        private int[] snapshotOfSpeedWindow = null;
 
-        private Context context;
-
-        private FileWriterControllerThread (Context context) {
-            this.context = context;
+        private FileWriterControllerThread (float[][][] snapshotAccelGyroMagnetoRealWorldWindows,
+                                            int[] snapshotOfSpeedWindow) {
+            this.snapshotAccelGyroMagnetoRealWorldWindows = snapshotAccelGyroMagnetoRealWorldWindows;
+            this.snapshotOfSpeedWindow = snapshotOfSpeedWindow;
         }
 
         @Override
         public void run() {
-            long startTimestamp = System.currentTimeMillis();
-            //float[][] accelerometerWindowInRealWorld = getVector3WindowInRealWorld(snapshot3Windows[0],rotationMatrix);
-            //float[][] gyroscopeWindowInRealWorld = getVector3WindowInRealWorld(snapshot3Windows[1],rotationMatrix);
             fileWriterLock.lock();
             if (fileWriter != null) {
-                saveAccelerometerAndGyroscopeWindowsToFile(
-                        snapshot3Windows[0], snapshot3Windows[1]);
+                saveAccelerometerGyroscopeAndSpeedWindowsToFile(
+                        snapshotAccelGyroMagnetoRealWorldWindows[0], snapshotAccelGyroMagnetoRealWorldWindows[1], snapshotOfSpeedWindow);
             }
             fileWriterLock.unlock();
-            long endTimestamp = System.currentTimeMillis();
-            long difference = endTimestamp - startTimestamp;
-            ((MainActivity) context).showToast(String.valueOf(difference));
         }
 
-        private void saveAccelerometerAndGyroscopeWindowsToFile(
-                float[][] accelerometerWindowInRealWorld, float[][] gyroscopeWindowInRealWorld) {
+        private void saveAccelerometerGyroscopeAndSpeedWindowsToFile(
+                float[][] accelerometerWindowInRealWorld, float[][] gyroscopeWindowInRealWorld,
+                int[] speedWindow) {
             int lengthToSave = accelerometerWindowInRealWorld.length > gyroscopeWindowInRealWorld.length ?
                     gyroscopeWindowInRealWorld.length : accelerometerWindowInRealWorld.length;
             for(int i=0; i < lengthToSave; i++) {
@@ -88,6 +76,7 @@ public class WindowLoggerListener implements RollingWindowChangesListener {
                 fileWriter.setFloat(gyroscopeWindowInRealWorld[i][0]);
                 fileWriter.setFloat(gyroscopeWindowInRealWorld[i][1]);
                 fileWriter.setFloat(gyroscopeWindowInRealWorld[i][2]);
+                fileWriter.setInt(speedWindow[i]);
                 fileWriter.nextLine();
             }
         }

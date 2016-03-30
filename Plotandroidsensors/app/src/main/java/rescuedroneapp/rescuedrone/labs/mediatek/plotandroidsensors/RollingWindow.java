@@ -6,20 +6,25 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import gps.SpeedLastValue;
+
 /**
  * Created by oscar on 02/03/2016.
  */
 public class RollingWindow{
 
     private Sensors sensors;
+    private SpeedLastValue speedLastValue;
 
     private float[][] accelerometerWindow;
     private float[][] gyroscopeWindow;
     private float[][] magnetometerWindow;
+    private int[] speedWindow;
 
     private Lock accelerometerWindowLock = new ReentrantLock();
     private Lock gyroscopeWindowLock = new ReentrantLock();
     private Lock magnetometerWindowLock = new ReentrantLock();
+    private Lock speedWindowLock = new ReentrantLock();
     private Lock newWindowPositionLock = new ReentrantLock();
 
     private boolean hasBeenFilled = false;
@@ -32,17 +37,18 @@ public class RollingWindow{
 
     private ArrayList<RollingWindowChangesListener> rollingWindowChangesListenerListeners;
 
-    public RollingWindow(Sensors sensors, int sampleFrequency, int windowFrequency,
+    public RollingWindow(Sensors sensors, SpeedLastValue speedLastValue, int sampleFrequency, int windowFrequency,
                          int represtativeChangeFrequency,
                          ArrayList<RollingWindowChangesListener> rollingWindowChangesListenerListeners) {
         this.sensors = sensors;
+        this.speedLastValue = speedLastValue;
         WINDOW_SIZE = windowFrequency/sampleFrequency;
         REPRESENTATIVE_CHANGE = represtativeChangeFrequency / sampleFrequency;
         this.rollingWindowChangesListenerListeners = rollingWindowChangesListenerListeners;
         accelerometerWindow = new float[WINDOW_SIZE][3];
         gyroscopeWindow = new float[WINDOW_SIZE][3];
         magnetometerWindow = new float[WINDOW_SIZE][3];
-
+        speedWindow = new int[WINDOW_SIZE];
         sensorsValuesUpdater = new SensorsValuesUpdater();
         Timer timerSensorValuesUpdater = new Timer(true);
         timerSensorValuesUpdater.scheduleAtFixedRate(sensorsValuesUpdater, sampleFrequency * 10, sampleFrequency);
@@ -65,11 +71,20 @@ public class RollingWindow{
         return snapshotWindows;
     }
 
+    private int[] snapshotOfSpeedWindow() {
+        int[] snapshotOfSpeedWindow;
+        speedWindowLock.lock();
+        snapshotOfSpeedWindow = speedWindow.clone();
+        speedWindowLock.unlock();
+        return snapshotOfSpeedWindow;
+    }
+
     private class SensorsValuesUpdater extends TimerTask {
 
         @Override
         public void run() {
             if (sensors.areCollecting()) {
+                newWindowPositionLock.lock();
                 accelerometerWindowLock.lock();
                 accelerometerWindow[newWindowPosition] = sensors.getLastAccelerometerData();
                 accelerometerWindowLock.unlock();
@@ -82,7 +97,10 @@ public class RollingWindow{
                 magnetometerWindow[newWindowPosition] = sensors.getLastMagnetometerData();
                 magnetometerWindowLock.unlock();
 
-                newWindowPositionLock.lock();
+                speedWindowLock.lock();
+                speedWindow[newWindowPosition] = speedLastValue.getLastSpeed();
+                speedWindowLock.unlock();
+
                 newWindowPosition = (newWindowPosition+1)%WINDOW_SIZE;
                 if (!hasBeenFilled) {
                     hasBeenFilled = newWindowPosition == 0;
@@ -97,9 +115,12 @@ public class RollingWindow{
 
             @Override
             public void run() {
+                newWindowPositionLock.lock();
                 float[][][] snapshotOf3Windows = snapshotOf3Windows();
+                int[] snapshotOfSpeedWindow = snapshotOfSpeedWindow();
+                newWindowPositionLock.unlock();
                 for(RollingWindowChangesListener rollingWindowChangesListenerListener : rollingWindowChangesListenerListeners) {
-                    rollingWindowChangesListenerListener.newRollingWindowRawData(snapshotOf3Windows);
+                    rollingWindowChangesListenerListener.newRollingWindowRawData(snapshotOf3Windows, snapshotOfSpeedWindow);
                 }
             }
         }

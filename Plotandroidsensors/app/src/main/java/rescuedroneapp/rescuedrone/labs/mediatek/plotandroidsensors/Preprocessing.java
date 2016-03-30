@@ -14,7 +14,7 @@ public class Preprocessing implements RollingWindowChangesListener {
     }
 
     @Override
-    public void newRollingWindowRawData(float[][][] snapshotOfAccelGyroMagnetoInRawWindows) {
+    public void newRollingWindowRawData(float[][][] snapshotOfAccelGyroMagnetoInRawWindows, int[] snapshotOfSpeedWindow) {
         new CalculatorThread(snapshotOfAccelGyroMagnetoInRawWindows[0],
                 snapshotOfAccelGyroMagnetoInRawWindows[1],
                 snapshotOfAccelGyroMagnetoInRawWindows[2]).start();
@@ -120,7 +120,8 @@ public class Preprocessing implements RollingWindowChangesListener {
     }
 
     @Override
-    public void newRollingWindowTransformedToRealWorld(float[][][] snapshotAccelGyroMagnetoRealWorldWindows) {
+    public void newRollingWindowTransformedToRealWorld(float[][][] snapshotAccelGyroMagnetoRealWorldWindows,
+                                                       int[] snapshotOfSpeedWindow) {
         new RealWorldCalculatorThread(snapshotAccelGyroMagnetoRealWorldWindows[0],
                 snapshotAccelGyroMagnetoRealWorldWindows[1],
                 snapshotAccelGyroMagnetoRealWorldWindows[2]).start();

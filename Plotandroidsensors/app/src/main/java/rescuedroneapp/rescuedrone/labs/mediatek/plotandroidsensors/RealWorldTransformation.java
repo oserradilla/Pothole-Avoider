@@ -20,8 +20,8 @@ public class RealWorldTransformation implements RollingWindowChangesListener, De
     }
 
     @Override
-    public void newRollingWindowRawData(float[][][] snapshotOfAccelGyroMagnetoInRawWindows) {
-        new newRollingWindowTransformNotifyThread(snapshotOfAccelGyroMagnetoInRawWindows).start();
+    public void newRollingWindowRawData(float[][][] snapshotOfAccelGyroMagnetoInRawWindows, int[] snapshotOfSpeedWindow) {
+        new newRollingWindowTransformNotifyThread(snapshotOfAccelGyroMagnetoInRawWindows, snapshotOfSpeedWindow).start();
     }
 
     @Override
@@ -34,16 +34,20 @@ public class RealWorldTransformation implements RollingWindowChangesListener, De
     private class newRollingWindowTransformNotifyThread extends Thread {
 
         private float[][][] snapshotOfAccelGyroMagnetoInRawWindows;
+        private int[] snapshotOfSpeedWindow;
 
-        private newRollingWindowTransformNotifyThread(float[][][] snapshotOfAccelGyroMagnetoInRawWindows) {
+        private newRollingWindowTransformNotifyThread(float[][][] snapshotOfAccelGyroMagnetoInRawWindows,
+                                                      int[] snapshotOfSpeedWindow) {
             this.snapshotOfAccelGyroMagnetoInRawWindows = snapshotOfAccelGyroMagnetoInRawWindows;
+            this.snapshotOfSpeedWindow = snapshotOfSpeedWindow;
         }
 
         @Override
         public void run() {
             float[][][] newRollingWindowTransformedToRealWorld = transform3WindowsVectorToRealWorld();
             for (RollingWindowChangesListener rollingWindowChangesListenerListener : rollingWindowChangesListenerListeners) {
-                rollingWindowChangesListenerListener.newRollingWindowTransformedToRealWorld(newRollingWindowTransformedToRealWorld);
+                rollingWindowChangesListenerListener.newRollingWindowTransformedToRealWorld(
+                        newRollingWindowTransformedToRealWorld, snapshotOfSpeedWindow);
             }
         }
 
@@ -62,7 +66,7 @@ public class RealWorldTransformation implements RollingWindowChangesListener, De
 
 
     @Override
-    public void newRollingWindowTransformedToRealWorld(float[][][] snapshotAccelGyroMagnetoRealWorldWindows) {}
+    public void newRollingWindowTransformedToRealWorld(float[][][] snapshotAccelGyroMagnetoRealWorldWindows, int[] snapshotOfSpeedWindow) {}
 
     @Override
     public void newRollingWindowDeviceWorldCalculus(float[][] calculusMatrix) {}

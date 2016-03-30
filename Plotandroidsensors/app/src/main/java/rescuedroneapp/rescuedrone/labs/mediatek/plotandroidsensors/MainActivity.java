@@ -2,15 +2,7 @@ package rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors;
 
 import java.util.ArrayList;
 
-import org.achartengine.ChartFactory;
-import org.achartengine.chart.PointStyle;
-import org.achartengine.model.XYMultipleSeriesDataset;
-import org.achartengine.model.XYSeries;
-import org.achartengine.renderer.XYMultipleSeriesRenderer;
-import org.achartengine.renderer.XYSeriesRenderer;
-
 import android.app.Activity;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -18,6 +10,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import gps.GPSListener;
+import gps.SpeedLastValue;
 import logger.AppNotifications;
 import logger.WindowLoggerListener;
 
@@ -41,6 +35,9 @@ public class MainActivity extends Activity implements
     private RollingWindow rollingWindow;
     private WindowLoggerListener windowLogger;
 
+    private SpeedLastValue speedLastValue = null;
+    private GPSListener gpsListener = null;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,7 +59,8 @@ public class MainActivity extends Activity implements
         if (sensorData == null || sensorData.size() == 0) {
             btnUpload.setEnabled(false);
         }
-
+        speedLastValue = new SpeedLastValue();
+        gpsListener = new GPSListener(this, speedLastValue);
     }
 
     @Override
@@ -74,9 +72,6 @@ public class MainActivity extends Activity implements
     @Override
     protected void onPause() {
         super.onPause();
-        if (started == true) {
-            sensors.stopCollectingData();
-        }
     }
 
     @Override
@@ -86,8 +81,13 @@ public class MainActivity extends Activity implements
 
     @Override
     protected void onDestroy() {
+        if (started == true) {
+            sensors.stopCollectingData();
+        }
+        if (gpsListener != null) {
+            gpsListener.stopGPS();
+        }
         super.onDestroy();
-        sensors.stopCollectingData();
     }
 
     @Override
@@ -102,8 +102,8 @@ public class MainActivity extends Activity implements
                 btnUpload.setEnabled(false);
                 sensorData = new ArrayList();
                 sensors.startCollectingData();
+
                 windowLogger = new WindowLoggerListener(this);
-                AI ai = new AI(sampleFrequency,windowFrequency,hasRepresentativelyChanged);
                 ArrayList<DevicePositionChangedListener> devicePositionChangedListeners = new ArrayList<>();
                 AppNotifications appNotifications = new AppNotifications(this);
                 devicePositionChangedListeners.add(appNotifications);
@@ -115,13 +115,12 @@ public class MainActivity extends Activity implements
                 rollingWindowChangesListenerListeners.add(windowLogger);
                 Preprocessing preprocessing = new Preprocessing(rollingWindowChangesListenerListeners);
                 rollingWindowChangesListenerListeners.add(preprocessing);
-                rollingWindow = new RollingWindow(sensors,sampleFrequency,windowFrequency,hasRepresentativelyChanged, rollingWindowChangesListenerListeners);
+                rollingWindow = new RollingWindow(sensors, speedLastValue, sampleFrequency,windowFrequency,hasRepresentativelyChanged, rollingWindowChangesListenerListeners);
                 RealWorldTransformation realWorldTransformation = new RealWorldTransformation(rollingWindowChangesListenerListeners);
                 rollingWindowChangesListenerListeners.add(realWorldTransformation);
                 devicePositionChangedListeners.add(realWorldTransformation);
-                SVMThreshold firstThreshold = new SVMThreshold();
-                rollingWindowChangesListenerListeners.add(firstThreshold);
-                // save prev data if available
+                GatherDataForAI gatherDataForAI = new GatherDataForAI();
+                rollingWindowChangesListenerListeners.add(gatherDataForAI);
                 started = true;
                 break;
             case R.id.btnStop:
@@ -143,77 +142,6 @@ public class MainActivity extends Activity implements
         }
     }
 
-    private void openChart() {
-        if (sensorData != null || sensorData.size() > 0) {
-            long t = sensorData.get(0).getTimestamp();
-            XYMultipleSeriesDataset dataset = new XYMultipleSeriesDataset();
-
-            XYSeries xSeries = new XYSeries("X");
-            XYSeries ySeries = new XYSeries("Y");
-            XYSeries zSeries = new XYSeries("Z");
-
-            for (AccelData data : sensorData) {
-                xSeries.add(data.getTimestamp() - t, data.getX());
-                ySeries.add(data.getTimestamp() - t, data.getY());
-                zSeries.add(data.getTimestamp() - t, data.getZ());
-            }
-
-            dataset.addSeries(xSeries);
-            dataset.addSeries(ySeries);
-            dataset.addSeries(zSeries);
-
-            XYSeriesRenderer xRenderer = new XYSeriesRenderer();
-            xRenderer.setColor(Color.RED);
-            xRenderer.setPointStyle(PointStyle.CIRCLE);
-            xRenderer.setFillPoints(true);
-            xRenderer.setLineWidth(1);
-            xRenderer.setDisplayChartValues(false);
-
-            XYSeriesRenderer yRenderer = new XYSeriesRenderer();
-            yRenderer.setColor(Color.GREEN);
-            yRenderer.setPointStyle(PointStyle.CIRCLE);
-            yRenderer.setFillPoints(true);
-            yRenderer.setLineWidth(1);
-            yRenderer.setDisplayChartValues(false);
-
-            XYSeriesRenderer zRenderer = new XYSeriesRenderer();
-            zRenderer.setColor(Color.BLUE);
-            zRenderer.setPointStyle(PointStyle.CIRCLE);
-            zRenderer.setFillPoints(true);
-            zRenderer.setLineWidth(1);
-            zRenderer.setDisplayChartValues(false);
-
-            XYMultipleSeriesRenderer multiRenderer = new XYMultipleSeriesRenderer();
-            multiRenderer.setXLabels(0);
-            multiRenderer.setLabelsColor(Color.RED);
-            multiRenderer.setChartTitle("t vs (x,y,z)");
-            multiRenderer.setXTitle("Sensor Data");
-            multiRenderer.setYTitle("Values of Acceleration");
-            multiRenderer.setZoomButtonsVisible(true);
-            for (int i = 0; i < sensorData.size(); i++) {
-
-                multiRenderer.addXTextLabel(i + 1, ""
-                        + (sensorData.get(i).getTimestamp() - t));
-            }
-            for (int i = 0; i < 12; i++) {
-                multiRenderer.addYTextLabel(i + 1, ""+i);
-            }
-
-            multiRenderer.addSeriesRenderer(xRenderer);
-            multiRenderer.addSeriesRenderer(yRenderer);
-            multiRenderer.addSeriesRenderer(zRenderer);
-
-            // Getting a reference to LinearLayout of the MainActivity Layout
-
-            // Creating a Line Chart
-            mChart = ChartFactory.getLineChartView(getBaseContext(), dataset,
-                    multiRenderer);
-
-            // Adding the Line Chart to the LinearLayout
-            layout.addView(mChart);
-
-        }
-    }
 
     public void showToast(final String toast)
     {
