@@ -68,55 +68,6 @@ public class Preprocessing implements RollingWindowChangesListener {
             meansVector3[2] = zSum/arrayVector3Values.length;
             return meansVector3;
         }
-
-        private float[] getVariancesVector3(float[] meansVector3,
-                                            float[][] arrayVector3Values) {
-            float xiMinusMeanXTwoSquaredSum = 0.0f;
-            float yiMinusMeanYTwoSquaredSum = 0.0f;
-            float ziMinusMeanZTwoSquaredSum = 0.0f;
-            for(float[] vector3Reading: arrayVector3Values) {
-                xiMinusMeanXTwoSquaredSum +=
-                        Math.pow(vector3Reading[0] - meansVector3[0], 2);
-                yiMinusMeanYTwoSquaredSum +=
-                        Math.pow(vector3Reading[1] - meansVector3[1], 2);
-                ziMinusMeanZTwoSquaredSum +=
-                        Math.pow(vector3Reading[2] - meansVector3[2], 2);
-            }
-            float[] variancesVector3 = new float[3];
-            variancesVector3[0] = xiMinusMeanXTwoSquaredSum/arrayVector3Values.length;
-            variancesVector3[1] = yiMinusMeanYTwoSquaredSum/arrayVector3Values.length;
-            variancesVector3[2] = ziMinusMeanZTwoSquaredSum/arrayVector3Values.length;
-            return variancesVector3;
-        }
-
-
-        private boolean isVector3InRange (float[] vector3, float range) {
-            boolean isInRange = false;
-            if (vector3[0] < range
-                    && vector3[0] > -range) {
-                if (vector3[1] < range
-                        && vector3[1] > -range) {
-                    if (vector3[2] < range
-                            && vector3[2] > -range) {
-                        isInRange = true;
-                    }
-                }
-            }
-            return isInRange;
-        }
-
-
-        private float[] getSVMVector3(float[][] arrayVector3Values) {
-            float xPow2, yPow2, zPow2;
-            float[] svmVector = new float[arrayVector3Values.length];
-            for (int i=0; i<arrayVector3Values.length; i++) {
-                xPow2 = (float) Math.pow(arrayVector3Values[i][0], 2);
-                yPow2 = (float) Math.pow(arrayVector3Values[i][1], 2);
-                zPow2 = (float) Math.pow(arrayVector3Values[i][2], 2);
-                svmVector[i] = xPow2 + yPow2 + zPow2;
-            }
-            return svmVector;
-        }
     }
 
     @Override
@@ -124,21 +75,20 @@ public class Preprocessing implements RollingWindowChangesListener {
                                                        int[] snapshotOfSpeedWindow) {
         new RealWorldCalculatorThread(snapshotAccelGyroMagnetoRealWorldWindows[0],
                 snapshotAccelGyroMagnetoRealWorldWindows[1],
-                snapshotAccelGyroMagnetoRealWorldWindows[2]).start();
+                snapshotOfSpeedWindow).start();
     }
 
     private class RealWorldCalculatorThread extends Thread{
 
         private float[][] arrayAccelerometerValues;
         private float[][] arrayGyroscopeValues;
-        private float[][] arrayMagnetometerValues;
+        private int[] speedWindow;
 
         public RealWorldCalculatorThread (float[][] arrayAccelerometerValues,
-                                 float[][] arrayGyroscopeValues,
-                                 float[][] arrayMagnetometerValues) {
+                                 float[][] arrayGyroscopeValues, int[] speedWindow) {
             this.arrayAccelerometerValues = arrayAccelerometerValues;
             this.arrayGyroscopeValues = arrayGyroscopeValues;
-            this.arrayMagnetometerValues = arrayMagnetometerValues;
+            this.speedWindow = speedWindow;
         }
 
         @Override
@@ -150,11 +100,20 @@ public class Preprocessing implements RollingWindowChangesListener {
         }
 
         private float[][] makeRealWorldCalculus() {
-            float[][] realWorldCalculus = new float[3][9];
+            float[][] realWorldCalculus = new float[3][10];
             realWorldCalculus[0][2] = getMeanFromMatrixColumnVector(arrayAccelerometerValues, 2);
+            realWorldCalculus[0][9] = getMean(speedWindow);
             realWorldCalculus[2][0] = getSVMVector3Difference(arrayAccelerometerValues);
             realWorldCalculus[2][3] = getSVMVector3Difference(arrayGyroscopeValues);
             return  realWorldCalculus;
+        }
+
+        private int getMean(int[] vector) {
+            int accumulatedValue = 0;
+            for(int i=0; i<vector.length; i++) {
+                accumulatedValue += vector[i];
+            }
+            return Math.round((float)accumulatedValue/vector.length);
         }
 
         private float getSVMVector3Difference(float[][] arrayVector3Values) {

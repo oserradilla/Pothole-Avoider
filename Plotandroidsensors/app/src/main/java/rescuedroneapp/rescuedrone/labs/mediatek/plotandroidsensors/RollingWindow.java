@@ -33,17 +33,14 @@ public class RollingWindow{
     SensorsValuesUpdater sensorsValuesUpdater;
 
     private int WINDOW_SIZE = -1;
-    private int REPRESENTATIVE_CHANGE = -1;
 
     private ArrayList<RollingWindowChangesListener> rollingWindowChangesListenerListeners;
 
     public RollingWindow(Sensors sensors, SpeedLastValue speedLastValue, int sampleFrequency, int windowFrequency,
-                         int represtativeChangeFrequency,
                          ArrayList<RollingWindowChangesListener> rollingWindowChangesListenerListeners) {
         this.sensors = sensors;
         this.speedLastValue = speedLastValue;
         WINDOW_SIZE = windowFrequency/sampleFrequency;
-        REPRESENTATIVE_CHANGE = represtativeChangeFrequency / sampleFrequency;
         this.rollingWindowChangesListenerListeners = rollingWindowChangesListenerListeners;
         accelerometerWindow = new float[WINDOW_SIZE][3];
         gyroscopeWindow = new float[WINDOW_SIZE][3];

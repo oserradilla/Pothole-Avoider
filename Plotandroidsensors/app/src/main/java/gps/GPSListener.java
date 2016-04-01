@@ -35,8 +35,8 @@ public class GPSListener implements GPSCallback{
         {
             gpsManager.showSettingsAlert();
         }
-        dialog = ProgressDialog.show(context, "",
-                "Looking for GPS. Please wait...", true);
+        /*dialog = ProgressDialog.show(context, "",
+                "Looking for GPS. Please wait...", true);*/
     }
 
     Toast toast = null;

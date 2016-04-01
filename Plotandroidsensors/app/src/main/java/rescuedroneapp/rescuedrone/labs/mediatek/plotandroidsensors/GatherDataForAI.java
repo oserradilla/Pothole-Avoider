@@ -21,7 +21,17 @@ public class GatherDataForAI implements RollingWindowChangesListener {
     private float[][] secondWindowRealWorldCalculus = null;
     private Lock realWorldCalculusWindowsLock;
 
-    public GatherDataForAI() {
+    private final int LAST_REAL_WORLD_CALCULUS_TO_STORE_MILLISECONDS = 30000;
+    private float[][][] windowToStoreRealWorldCalculus = null;
+    private int NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS;
+    private boolean hasBeenFilled = false;
+    private int newWindowPosition = 0;
+    private Lock newWindowPositionLock = new ReentrantLock();
+
+    public GatherDataForAI(int windowFrequency) {
+        NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS = (int) Math.ceil(
+                (float) LAST_REAL_WORLD_CALCULUS_TO_STORE_MILLISECONDS /windowFrequency);
+        windowToStoreRealWorldCalculus = new float[NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS][][];
         waitUntilNewCalculusArrivesSemaphore = new Semaphore(1);
         waitUntilNewRealWorldWindowArrivesSemaphore = new Semaphore(0);
         windowReferencesLock = new ReentrantLock();
@@ -81,6 +91,22 @@ public class GatherDataForAI implements RollingWindowChangesListener {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            newWindowPositionLock.lock();
+            windowToStoreRealWorldCalculus[newWindowPosition] = calculusMatrix;
+            newWindowPosition = (newWindowPosition+1)%NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS;
+            if (!hasBeenFilled) {
+                hasBeenFilled = newWindowPosition == 0;
+            } else {
+                float[][][] copyRealWorldCalculusWindow = new float[windowToStoreRealWorldCalculus.length][][];
+                for(int i=0; i<windowToStoreRealWorldCalculus.length; i++) {
+                    copyRealWorldCalculusWindow[i] = windowToStoreRealWorldCalculus[i];
+                }
+                new AICurves(copyRealWorldCalculusWindow).start();
+            }
+            newWindowPositionLock.unlock();
+
+
             realWorldCalculusWindowsLock.lock();
             firstWindowRealWorldCalculus = secondWindowRealWorldCalculus;
             secondWindowRealWorldCalculus = calculusMatrix;
@@ -96,8 +122,9 @@ public class GatherDataForAI implements RollingWindowChangesListener {
                 dataToBeAnalysedByAI.setSecondWindowPieceSpeedWindow(secondWindowPieceSpeedWindow);
                 dataToBeAnalysedByAI.setFirstWindowRealWorldCalculus(firstWindowRealWorldCalculus);
                 dataToBeAnalysedByAI.setSecondWindowRealWorldCalculus(secondWindowRealWorldCalculus);
-                new AIThread(dataToBeAnalysedByAI).start();
+                new AIPotholes(dataToBeAnalysedByAI).start();
             }
+
             windowReferencesLock.unlock();
             realWorldCalculusWindowsLock.unlock();
 

@@ -10,7 +10,7 @@ public interface RollingWindowChangesListener {
                                                 int[] snapshotOfSpeedWindow);
 
     /* Matrix format:
-                        AccelX|AccelY|AccelZ|GyroX|GyroY|GyroZ|MagnetoX|MagnetoY|MagnetoZ
+                        AccelX|AccelY|AccelZ|GyroX|GyroY|GyroZ|MagnetoX|MagnetoY|MagnetoZ|Speed
             mean
             variance
             svm

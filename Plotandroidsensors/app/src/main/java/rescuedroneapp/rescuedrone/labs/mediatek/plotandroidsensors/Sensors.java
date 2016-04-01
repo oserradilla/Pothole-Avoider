@@ -29,12 +29,16 @@ public class Sensors implements SensorEventListener {
 
     private boolean collecting = false;
 
+    private int minSampleFrequency;
+
     public Sensors(Context context) {
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        //magnetometer.getMinDelay();
+        minSampleFrequency = accelerometer.getMinDelay();
+        minSampleFrequency = gyroscope.getMinDelay() < minSampleFrequency ?
+                gyroscope.getMinDelay() : minSampleFrequency;
     }
 
     @Override
@@ -95,5 +99,9 @@ public class Sensors implements SensorEventListener {
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    public int getMinSampleFrequencyMilliseconds() {
+        return minSampleFrequency/1000;
     }
 }

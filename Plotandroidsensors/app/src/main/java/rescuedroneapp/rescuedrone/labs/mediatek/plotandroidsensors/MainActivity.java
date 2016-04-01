@@ -94,9 +94,8 @@ public class MainActivity extends Activity implements
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btnStart:
-                int windowFrequency = 2000;
-                int sampleFrequency = 5;
-                int hasRepresentativelyChanged = 100;
+                int windowFrequency = 1500;
+                int sampleFrequency = sensors.getMinSampleFrequencyMilliseconds();
                 btnStart.setEnabled(false);
                 btnStop.setEnabled(true);
                 btnUpload.setEnabled(false);
@@ -115,11 +114,11 @@ public class MainActivity extends Activity implements
                 rollingWindowChangesListenerListeners.add(windowLogger);
                 Preprocessing preprocessing = new Preprocessing(rollingWindowChangesListenerListeners);
                 rollingWindowChangesListenerListeners.add(preprocessing);
-                rollingWindow = new RollingWindow(sensors, speedLastValue, sampleFrequency,windowFrequency,hasRepresentativelyChanged, rollingWindowChangesListenerListeners);
+                rollingWindow = new RollingWindow(sensors, speedLastValue, sampleFrequency,windowFrequency, rollingWindowChangesListenerListeners);
                 RealWorldTransformation realWorldTransformation = new RealWorldTransformation(rollingWindowChangesListenerListeners);
                 rollingWindowChangesListenerListeners.add(realWorldTransformation);
                 devicePositionChangedListeners.add(realWorldTransformation);
-                GatherDataForAI gatherDataForAI = new GatherDataForAI();
+                GatherDataForAI gatherDataForAI = new GatherDataForAI(windowFrequency);
                 rollingWindowChangesListenerListeners.add(gatherDataForAI);
                 started = true;
                 break;

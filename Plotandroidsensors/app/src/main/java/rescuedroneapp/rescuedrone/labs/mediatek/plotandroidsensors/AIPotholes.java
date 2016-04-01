@@ -7,11 +7,11 @@ import logger.AppNotifications;
 /**
  * Created by oscar on 02/03/2016.
  */
-public class AIThread extends Thread {
+public class AIPotholes extends Thread {
 
     private DataToBeAnalysedByAI dataToBeAnalysedByAI;
 
-    public AIThread(DataToBeAnalysedByAI dataToBeAnalysedByAI) {
+    public AIPotholes(DataToBeAnalysedByAI dataToBeAnalysedByAI) {
         this.dataToBeAnalysedByAI = dataToBeAnalysedByAI;
     }
 
