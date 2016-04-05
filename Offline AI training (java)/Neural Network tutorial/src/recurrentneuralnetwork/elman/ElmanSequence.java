@@ -23,12 +23,14 @@
  */
 package recurrentneuralnetwork.elman;
 
+import java.io.IOException;
+
 import org.encog.Encog;
 import org.encog.engine.network.activation.ActivationSigmoid;
 import org.encog.ml.CalculateScore;
 import org.encog.ml.data.MLData;
+import org.encog.ml.data.MLDataPair;
 import org.encog.ml.data.MLDataSet;
-import org.encog.ml.data.basic.BasicMLData;
 import org.encog.ml.train.MLTrain;
 import org.encog.ml.train.strategy.Greedy;
 import org.encog.ml.train.strategy.HybridStrategy;
@@ -51,22 +53,37 @@ import org.encog.neural.pattern.ElmanPattern;
  */
 public class ElmanSequence {
 
-	static BasicNetwork createElmanNetwork() {
+	static BasicNetwork createElmanNetwork(int numInputNeurons, int numOutputNeurons) {
 		// construct an Elman type network
 		ElmanPattern pattern = new ElmanPattern();
 		pattern.setActivationFunction(new ActivationSigmoid());
-		pattern.setInputNeurons(1);
+		pattern.setInputNeurons(numInputNeurons);
 		pattern.addHiddenLayer(6);
-		pattern.setOutputNeurons(1);
+		pattern.setOutputNeurons(numOutputNeurons);
 		return (BasicNetwork)pattern.generate();
 	}
-
+	
+	
 	public static void main(final String args[]) {
-		
-		final TemporalSequence temp = new TemporalSequence();
-		final MLDataSet trainingSet = temp.generate(1700); //Multiple of sequence
+		FileHandler fileHandler = new FileHandler();
+		int numInputNeurons = 1;
+		int numOutputNeurons = 1;
 
-		final BasicNetwork elmanNetwork = ElmanSequence.createElmanNetwork();
+		float[][] trainData = null;
+		int[] trainDataLengthVector = new int[1];
+		try {
+			trainData = fileHandler.readAllInputFromDirectory("potholes"+"/"+"train", trainDataLengthVector,
+					numInputNeurons+numOutputNeurons);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		int inputDataLength = trainDataLengthVector[0];
+
+		final Sequence trainingSequence = new Sequence(trainData, inputDataLength, 
+				numInputNeurons, numOutputNeurons);
+		final MLDataSet trainingSet = trainingSequence.generate(100);
+
+		final BasicNetwork elmanNetwork = ElmanSequence.createElmanNetwork(numInputNeurons, numOutputNeurons);
 
 		final double elmanError = ElmanSequence.trainNetwork("Elman", elmanNetwork,
 				trainingSet);	
@@ -75,67 +92,36 @@ public class ElmanSequence {
 		
 		System.out.println("\n\n");
 		
-		double[][] input = new double[3][1];
-		input[0][0] = 1;
-		input[1][0] = 2;
-		input[2][0] = 3;
+		float[][] testData = null;
+		int[] testDataLengthVector = new int[1];
+		try {
+			testData = fileHandler.readAllInputFromDirectory("potholes"+"/"+"test", testDataLengthVector,
+					numInputNeurons+numOutputNeurons);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		int testDataLength = testDataLengthVector[0];
+
+		final Sequence testSequence = new Sequence(testData, testDataLength, 
+				numInputNeurons, numOutputNeurons);
+		final MLDataSet testingSet = testSequence.generate(1);
 		
-		MLData mldata1 = new BasicMLData(input[0]);
-		MLData computedData = elmanNetwork.compute(mldata1);
-		System.out.print("Given: " + input[0][0]);
-		System.out.println(" Predicted: "+computedData.getData(0));
-		
-		MLData mldata2 = new BasicMLData(input[1]);
-		MLData computedData2 = elmanNetwork.compute(mldata2);
-		System.out.print("Given: " + input[1][0]);
-		System.out.println(" Predicted: "+computedData2.getData(0));
-		
-		MLData mldata3 = new BasicMLData(input[2]);
-		MLData computedData3 = elmanNetwork.compute(mldata3);
-		System.out.print("Given: " + input[2][0]);
-		System.out.println(" Predicted: "+computedData3.getData(0));
-		
-		input[0][0] = 4;
-		input[1][0] = 3;
-		input[2][0] = 2;
-		
-		mldata1 = new BasicMLData(input[0]);
-		computedData = elmanNetwork.compute(mldata1);
-		System.out.print("Given: " + input[0][0]);
-		System.out.println(" Predicted: "+computedData.getData(0));
-		
-		mldata2 = new BasicMLData(input[1]);
-		computedData2 = elmanNetwork.compute(mldata2);
-		System.out.print("Given: " + input[1][0]);
-		System.out.println(" Predicted: "+computedData2.getData(0));
-		
-		mldata3 = new BasicMLData(input[2]);
-		computedData3 = elmanNetwork.compute(mldata3);
-		System.out.print("Given: " + input[2][0]);
-		System.out.println(" Predicted: "+computedData3.getData(0));
-		
-		input[0][0] = 1;
-		input[1][0] = 1;
-		input[2][0] = 1;
-		
-		mldata1 = new BasicMLData(input[0]);
-		computedData = elmanNetwork.compute(mldata1);
-		System.out.print("Given: " + input[0][0]);
-		System.out.println(" Predicted: "+computedData.getData(0));
-		
-		mldata2 = new BasicMLData(input[1]);
-		computedData2 = elmanNetwork.compute(mldata2);
-		System.out.print("Given: " + input[1][0]);
-		System.out.println(" Predicted: "+computedData2.getData(0));
-		
-		mldata3 = new BasicMLData(input[2]);
-		computedData3 = elmanNetwork.compute(mldata3);
-		System.out.print("Given: " + input[2][0]);
-		System.out.println(" Predicted: "+computedData3.getData(0));
-		
+		ElmanSequence.testNetwork(elmanNetwork, testingSet);		
 		
 		Encog.getInstance().shutdown();
 	}
+
+	private static void testNetwork(BasicNetwork elmanNetwork,
+			MLDataSet testingSet) {
+		
+		for(int datasetIdx = 0; datasetIdx < testingSet.size(); datasetIdx++){
+			MLDataPair mldataPair = testingSet.get(datasetIdx);
+			MLData output = elmanNetwork.compute(mldataPair.getInput());
+			System.out.println("Input: "+mldataPair.getInput()+"  Expected: "
+					+mldataPair.getIdeal()+"  Output: "+output);
+		}
+	}
+
 
 	public static double trainNetwork(final String what,
 			final BasicNetwork network, final MLDataSet trainingSet) {
