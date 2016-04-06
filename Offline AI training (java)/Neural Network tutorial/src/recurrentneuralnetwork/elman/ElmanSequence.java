@@ -81,16 +81,15 @@ public class ElmanSequence {
 
 		final Sequence trainingSequence = new Sequence(trainData, inputDataLength, 
 				numInputNeurons, numOutputNeurons);
-		final MLDataSet trainingSet = trainingSequence.generate(100);
+		MLDataSet trainingSet = trainingSequence.generate(100);
 
 		final BasicNetwork elmanNetwork = ElmanSequence.createElmanNetwork(numInputNeurons, numOutputNeurons);
 
 		final double elmanError = ElmanSequence.trainNetwork("Elman", elmanNetwork,
 				trainingSet);	
-
-		System.out.println("Best error rate with Elman Network: " + elmanError);
 		
-		System.out.println("\n\n");
+		trainData = null;
+		trainingSet = null;
 		
 		float[][] testData = null;
 		int[] testDataLengthVector = new int[1];
@@ -113,13 +112,17 @@ public class ElmanSequence {
 
 	private static void testNetwork(BasicNetwork elmanNetwork,
 			MLDataSet testingSet) {
-		
+		FileWriter fileWriter = new FileWriter();
+		fileWriter.openNewFile("result/testing");
 		for(int datasetIdx = 0; datasetIdx < testingSet.size(); datasetIdx++){
 			MLDataPair mldataPair = testingSet.get(datasetIdx);
 			MLData output = elmanNetwork.compute(mldataPair.getInput());
-			System.out.println("Input: "+mldataPair.getInput()+"  Expected: "
-					+mldataPair.getIdeal()+"  Output: "+output);
+			fileWriter.setFloat((float)mldataPair.getInput().getData(0));
+			fileWriter.setFloat((float)output.getData(0));
+			fileWriter.setFloat((float)mldataPair.getIdeal().getData(0));
+			fileWriter.nextLine();
 		}
+		fileWriter.closeFile();
 	}
 
 
@@ -137,13 +140,21 @@ public class ElmanSequence {
 		trainMain.addStrategy(new HybridStrategy(trainAlt));
 		trainMain.addStrategy(stop);
 
-		int epoch = 0;
+		FileWriter fileWriter = new FileWriter();
+		fileWriter.openNewFile("result/logSyso");
+		
+		int epoch = 0;		
+		
 		while (!stop.shouldStop()) {
 			trainMain.iteration();
-			System.out.println("Training " + what + ", Epoch #" + epoch
+			fileWriter.setLine("Training " + what + ", Epoch #" + epoch
 					+ " Error:" + trainMain.getError());
 			epoch++;
 		}
+		
+		fileWriter.setLine("Best error rate with Elman Network: " + trainMain.getError());
+
+		fileWriter.closeFile();
 		return trainMain.getError();
 	}
 }
