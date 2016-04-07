@@ -24,6 +24,11 @@
 package recurrentneuralnetwork.elman;
 
 import java.io.IOException;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import org.encog.Encog;
 import org.encog.engine.network.activation.ActivationSigmoid;
@@ -52,6 +57,9 @@ import org.encog.neural.pattern.ElmanPattern;
  * 
  */
 public class ElmanSequence {
+	
+	private static int numTest;
+	private static Logger log;
 
 	static BasicNetwork createElmanNetwork(int numInputNeurons, int numOutputNeurons) {
 		// construct an Elman type network
@@ -65,55 +73,99 @@ public class ElmanSequence {
 	
 	
 	public static void main(final String args[]) {
-		FileHandler fileHandler = new FileHandler();
+		numTest = FileWriter.getTestNumber("result/ElmanSequence");
+		
+		Handler fh = null;
+		try {
+			fh = new FileHandler("result/ElmanSequence" + numTest + ".log");
+		} catch (SecurityException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		log = Logger.getLogger("");
+		log.addHandler(fh);
+		log.setLevel(Level.FINEST);
+		SimpleFormatter formatter = new SimpleFormatter();  
+        fh.setFormatter(formatter); 
+		
+		
+		
+		MyFileHandler fileHandler = new MyFileHandler(log);
 		int numInputNeurons = 1;
 		int numOutputNeurons = 1;
 
 		float[][] trainData = null;
 		int[] trainDataLengthVector = new int[1];
+		log.log( Level.FINEST, "Reading input files");
 		try {
 			trainData = fileHandler.readAllInputFromDirectory("potholes"+"/"+"train", trainDataLengthVector,
 					numInputNeurons+numOutputNeurons);
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.log( Level.SEVERE, e.toString(), e );
 		}
+		log.log( Level.FINE, "Training files read");
 		int inputDataLength = trainDataLengthVector[0];
+		
+		log.log( Level.FINE, "Generating training sequence");
 
 		final Sequence trainingSequence = new Sequence(trainData, inputDataLength, 
 				numInputNeurons, numOutputNeurons);
-		MLDataSet trainingSet = trainingSequence.generate(100);
+		MLDataSet trainingSet = trainingSequence.generate(1);
 
+		log.log( Level.FINE, "Creating elman network");
+		
 		final BasicNetwork elmanNetwork = ElmanSequence.createElmanNetwork(numInputNeurons, numOutputNeurons);
 
+		log.log( Level.FINE, "Training elman network");
+		
 		final double elmanError = ElmanSequence.trainNetwork("Elman", elmanNetwork,
 				trainingSet);	
+		
+		log.log( Level.FINE, "Elman network trained. Now its testing time");
 		
 		trainData = null;
 		trainingSet = null;
 		
 		float[][] testData = null;
 		int[] testDataLengthVector = new int[1];
+		
+		log.log( Level.FINE, "Reading test data");
+		
 		try {
 			testData = fileHandler.readAllInputFromDirectory("potholes"+"/"+"test", testDataLengthVector,
 					numInputNeurons+numOutputNeurons);
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.log( Level.SEVERE, e.toString(), e );
 		}
+		
+		log.log( Level.FINE, "Test files read");
+		
 		int testDataLength = testDataLengthVector[0];
 
+		log.log( Level.FINE, "Generating testing sequence");
+		
 		final Sequence testSequence = new Sequence(testData, testDataLength, 
 				numInputNeurons, numOutputNeurons);
 		final MLDataSet testingSet = testSequence.generate(1);
 		
+		log.log( Level.FINE, "Testing elman network");
+		
 		ElmanSequence.testNetwork(elmanNetwork, testingSet);		
+		
+		log.log( Level.FINE, "Testing finished");
+		
+		log.log( Level.FINE, "Shutting down");
 		
 		Encog.getInstance().shutdown();
 	}
 
 	private static void testNetwork(BasicNetwork elmanNetwork,
 			MLDataSet testingSet) {
-		FileWriter fileWriter = new FileWriter();
-		fileWriter.openNewFile("result/testing");
+		FileWriter fileWriter = new FileWriter(log);
+		fileWriter.openNewFile("result/testing" + numTest);
 		for(int datasetIdx = 0; datasetIdx < testingSet.size(); datasetIdx++){
 			MLDataPair mldataPair = testingSet.get(datasetIdx);
 			MLData output = elmanNetwork.compute(mldataPair.getInput());
@@ -140,8 +192,8 @@ public class ElmanSequence {
 		trainMain.addStrategy(new HybridStrategy(trainAlt));
 		trainMain.addStrategy(stop);
 
-		FileWriter fileWriter = new FileWriter();
-		fileWriter.openNewFile("result/logSyso");
+		FileWriter fileWriter = new FileWriter(log);
+		fileWriter.openNewFile("result/logSyso" + numTest);
 		
 		int epoch = 0;		
 		

@@ -1,0 +1,24 @@
+abr 07, 2016 12:22:01 PM java.util.logging.LogManager$RootLogger log
+MÁS DETALLADO: Reading input files
+abr 07, 2016 12:22:01 PM java.util.logging.LogManager$RootLogger log
+DETALLADO: Training files read
+abr 07, 2016 12:22:01 PM java.util.logging.LogManager$RootLogger log
+DETALLADO: Generating training sequence
+abr 07, 2016 12:22:01 PM java.util.logging.LogManager$RootLogger log
+DETALLADO: Creating elman network
+abr 07, 2016 12:22:01 PM java.util.logging.LogManager$RootLogger log
+DETALLADO: Training elman network
+abr 07, 2016 12:22:02 PM java.util.logging.LogManager$RootLogger log
+DETALLADO: Elman network trained. Now its testing time
+abr 07, 2016 12:22:02 PM java.util.logging.LogManager$RootLogger log
+DETALLADO: Reading test data
+abr 07, 2016 12:22:02 PM java.util.logging.LogManager$RootLogger log
+DETALLADO: Test files read
+abr 07, 2016 12:22:02 PM java.util.logging.LogManager$RootLogger log
+DETALLADO: Generating testing sequence
+abr 07, 2016 12:22:02 PM java.util.logging.LogManager$RootLogger log
+DETALLADO: Testing elman network
+abr 07, 2016 12:22:02 PM java.util.logging.LogManager$RootLogger log
+DETALLADO: Testing finished
+abr 07, 2016 12:22:02 PM java.util.logging.LogManager$RootLogger log
+DETALLADO: Shutting down

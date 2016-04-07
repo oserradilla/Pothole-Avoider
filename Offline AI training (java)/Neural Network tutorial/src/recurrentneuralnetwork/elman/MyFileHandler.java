@@ -5,8 +5,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class FileHandler {
+public class MyFileHandler {
+	
+	private Logger log;
+	
+	public MyFileHandler(Logger log) {
+		this.log = log;
+	}
 	
 	public float[][] readAllInputFromDirectory(String dirName, int[] inputDataLengthVector, int numColumns) throws IOException {
 		int linesOfFiles = getNumLinesFromFilesOfFolder(dirName);
@@ -57,15 +65,15 @@ public class FileHandler {
 			}
 
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			log.log( Level.SEVERE, e.toString(), e );
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.log( Level.SEVERE, e.toString(), e );
 		} finally {
 			if (br != null) {
 				try {
 					br.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					log.log( Level.SEVERE, e.toString(), e );
 				}
 			}
 		}

@@ -1,0 +1,1 @@
+java -jar -server -d64 -DisableExplicitGC -XX:CMSInitiatingOccupancyFraction=70 -Xms15G -Xmx15G elmantest-runnable.jar
