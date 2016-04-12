@@ -23,6 +23,9 @@ public class GatherDataForAI implements RollingWindowChangesListener {
 
     private final int LAST_REAL_WORLD_CALCULUS_TO_STORE_MILLISECONDS = 30000;
     private float[][][] windowToStoreRealWorldCalculus = null;
+    private Lock realWorldCalculusIdxLock = new ReentrantLock();
+    boolean windowRealWorldCalculusHasBeenFilled = false;
+    private int realWorldCalculusIdx = 0;
     private int NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS;
     private boolean hasBeenFilled = false;
     private int newWindowPosition = 0;
@@ -31,6 +34,8 @@ public class GatherDataForAI implements RollingWindowChangesListener {
     public GatherDataForAI(int windowFrequency) {
         NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS = (int) Math.ceil(
                 (float) LAST_REAL_WORLD_CALCULUS_TO_STORE_MILLISECONDS /windowFrequency);
+        //TODO Remove temporal hardcoding of 3 windows (4.5s)
+        NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS = 3;
         windowToStoreRealWorldCalculus = new float[NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS][][];
         waitUntilNewCalculusArrivesSemaphore = new Semaphore(1);
         waitUntilNewRealWorldWindowArrivesSemaphore = new Semaphore(0);
@@ -91,45 +96,74 @@ public class GatherDataForAI implements RollingWindowChangesListener {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
+            boolean passesSVMThreshold = passesSVMThreshold();
             newWindowPositionLock.lock();
-            windowToStoreRealWorldCalculus[newWindowPosition] = calculusMatrix;
-            newWindowPosition = (newWindowPosition+1)%NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS;
+            newWindowPosition = (newWindowPosition + 1) % NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS;
             if (!hasBeenFilled) {
                 hasBeenFilled = newWindowPosition == 0;
-            } else {
-                float[][][] copyRealWorldCalculusWindow = new float[windowToStoreRealWorldCalculus.length][][];
-                for(int i=0; i<windowToStoreRealWorldCalculus.length; i++) {
-                    copyRealWorldCalculusWindow[i] = windowToStoreRealWorldCalculus[i];
+            }
+
+                newWindowPositionLock.unlock();
+
+
+                realWorldCalculusWindowsLock.lock();
+                firstWindowRealWorldCalculus = secondWindowRealWorldCalculus;
+                secondWindowRealWorldCalculus = calculusMatrix;
+
+                windowReferencesLock.lock();
+                if (firstWindowPieceAccelGyroMagnetoRealWorldWindows != null &&
+                        firstWindowPieceSpeedWindow != null &&
+                        firstWindowRealWorldCalculus != null) {
+                    if (passesSVMThreshold) {
+                        DataToBeAnalysedByAI dataToBeAnalysedByAI = new DataToBeAnalysedByAI();
+                        dataToBeAnalysedByAI.setFirstWindowPieceAccelGyroMagnetoRealWorldWindows(firstWindowPieceAccelGyroMagnetoRealWorldWindows);
+                        dataToBeAnalysedByAI.setSecondWindowPieceAccelGyroMagnetoRealWorldWindows(secondWindowPieceAccelGyroMagnetoRealWorldWindows);
+                        dataToBeAnalysedByAI.setFirstWindowPieceSpeedWindow(firstWindowPieceSpeedWindow);
+                        dataToBeAnalysedByAI.setSecondWindowPieceSpeedWindow(secondWindowPieceSpeedWindow);
+                        dataToBeAnalysedByAI.setFirstWindowRealWorldCalculus(firstWindowRealWorldCalculus);
+                        dataToBeAnalysedByAI.setSecondWindowRealWorldCalculus(secondWindowRealWorldCalculus);
+                        new AIPotholes(dataToBeAnalysedByAI).start();
+                    }
                 }
-                new AICurves(copyRealWorldCalculusWindow).start();
+
+                windowReferencesLock.unlock();
+
+                realWorldCalculusIdxLock.lock();
+                windowToStoreRealWorldCalculus[realWorldCalculusIdx] = calculusMatrix;
+                realWorldCalculusIdx = (realWorldCalculusIdx + 1) % NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS;
+                if (!windowRealWorldCalculusHasBeenFilled) {
+                    windowRealWorldCalculusHasBeenFilled = realWorldCalculusIdx == 0;
+                }
+                if (windowRealWorldCalculusHasBeenFilled) {
+                    if (passesSVMThreshold) {
+                        float[][][] copyRealWorldCalculusWindow = new float[windowToStoreRealWorldCalculus.length][][];
+                        for (int i = 0; i < windowToStoreRealWorldCalculus.length; i++) {
+                            copyRealWorldCalculusWindow[i] = windowToStoreRealWorldCalculus[i];
+                        }
+                        new AICurves(copyRealWorldCalculusWindow).start();
+                    }
+                }
+                realWorldCalculusIdxLock.unlock();
+
+                realWorldCalculusWindowsLock.unlock();
+
+                waitUntilNewRealWorldWindowArrivesSemaphore.release();
+                waitUntilNewCalculusArrivesSemaphore.release();
+
+        }
+
+        private boolean passesSVMThreshold() {
+            boolean passesSVMThreshold = false;
+            float[][] firstCalculusMatrix = firstWindowRealWorldCalculus;
+            float[][] secondCalculusMatrix = secondWindowRealWorldCalculus;
+            if (firstCalculusMatrix != null && secondCalculusMatrix != null) {
+                float avgAccelerometerSVM = (firstCalculusMatrix[2][0] + secondCalculusMatrix[2][0]) / 2;
+                float avgGyroscopeSVM = (firstCalculusMatrix[2][3] + secondCalculusMatrix[2][3]) / 2;
+                if (avgAccelerometerSVM > 6 && avgGyroscopeSVM < 0.5) {
+                    passesSVMThreshold = true;
+                }
             }
-            newWindowPositionLock.unlock();
-
-
-            realWorldCalculusWindowsLock.lock();
-            firstWindowRealWorldCalculus = secondWindowRealWorldCalculus;
-            secondWindowRealWorldCalculus = calculusMatrix;
-
-            windowReferencesLock.lock();
-            if (firstWindowPieceAccelGyroMagnetoRealWorldWindows != null &&
-                    firstWindowPieceSpeedWindow != null &&
-                    firstWindowRealWorldCalculus != null) {
-                DataToBeAnalysedByAI dataToBeAnalysedByAI = new DataToBeAnalysedByAI();
-                dataToBeAnalysedByAI.setFirstWindowPieceAccelGyroMagnetoRealWorldWindows(firstWindowPieceAccelGyroMagnetoRealWorldWindows);
-                dataToBeAnalysedByAI.setSecondWindowPieceAccelGyroMagnetoRealWorldWindows(secondWindowPieceAccelGyroMagnetoRealWorldWindows);
-                dataToBeAnalysedByAI.setFirstWindowPieceSpeedWindow(firstWindowPieceSpeedWindow);
-                dataToBeAnalysedByAI.setSecondWindowPieceSpeedWindow(secondWindowPieceSpeedWindow);
-                dataToBeAnalysedByAI.setFirstWindowRealWorldCalculus(firstWindowRealWorldCalculus);
-                dataToBeAnalysedByAI.setSecondWindowRealWorldCalculus(secondWindowRealWorldCalculus);
-                new AIPotholes(dataToBeAnalysedByAI).start();
-            }
-
-            windowReferencesLock.unlock();
-            realWorldCalculusWindowsLock.unlock();
-
-            waitUntilNewRealWorldWindowArrivesSemaphore.release();
-            waitUntilNewCalculusArrivesSemaphore.release();
+            return passesSVMThreshold;
         }
     }
 

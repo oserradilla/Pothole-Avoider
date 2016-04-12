@@ -2,7 +2,8 @@ package rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors;
 
 import android.util.Log;
 
-import logger.AppNotifications;
+import notifications.AppNotifications;
+import notifications.MyTextToSpeech;
 
 /**
  * Created by oscar on 02/03/2016.
@@ -17,23 +18,10 @@ public class AIPotholes extends Thread {
 
     @Override
     public void run() {
-        if(passesSVMThreshold()) {
             if(passesEnergyThreshold()) {
-                AppNotifications.beep();
+                MyTextToSpeech tts = MyTextToSpeech.getInstance();
+                tts.speakText("Bache");
             }
-        }
-    }
-
-    private boolean passesSVMThreshold() {
-        boolean passesSVMThreshold = false;
-        float[][] firstCalculusMatrix = dataToBeAnalysedByAI.getFirstWindowRealWorldCalculus();
-        float[][] secondCalculusMatrix = dataToBeAnalysedByAI.getSecondWindowRealWorldCalculus();
-        float avgAccelerometerSVM = (firstCalculusMatrix[2][0] + secondCalculusMatrix[2][0]) / 2;
-        float avgGyroscopeSVM = (firstCalculusMatrix[2][3] + secondCalculusMatrix[2][3]) / 2;
-        if (avgAccelerometerSVM > 6 && avgGyroscopeSVM < 0.5) {
-            passesSVMThreshold = true;
-        }
-        return passesSVMThreshold;
     }
 
     private boolean passesEnergyThreshold() {

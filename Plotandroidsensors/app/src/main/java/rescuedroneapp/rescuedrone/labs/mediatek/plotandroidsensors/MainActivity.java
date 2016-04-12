@@ -12,8 +12,9 @@ import android.widget.Toast;
 
 import gps.GPSListener;
 import gps.SpeedLastValue;
-import logger.AppNotifications;
+import notifications.AppNotifications;
 import logger.WindowLoggerListener;
+import notifications.MyTextToSpeech;
 
 public class MainActivity extends Activity implements
         OnClickListener {
@@ -41,6 +42,7 @@ public class MainActivity extends Activity implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        new MyTextToSpeech(this);
         setContentView(R.layout.activity_main);
         layout = (LinearLayout) findViewById(R.id.chart_container);
 

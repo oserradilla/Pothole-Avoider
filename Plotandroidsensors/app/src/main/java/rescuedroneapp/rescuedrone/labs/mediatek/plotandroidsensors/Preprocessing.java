@@ -102,6 +102,7 @@ public class Preprocessing implements RollingWindowChangesListener {
         private float[][] makeRealWorldCalculus() {
             float[][] realWorldCalculus = new float[3][10];
             realWorldCalculus[0][2] = getMeanFromMatrixColumnVector(arrayAccelerometerValues, 2);
+            realWorldCalculus[0][5] = getMeanFromMatrixColumnVector(arrayGyroscopeValues, 2);
             realWorldCalculus[0][9] = getMean(speedWindow);
             realWorldCalculus[2][0] = getSVMVector3Difference(arrayAccelerometerValues);
             realWorldCalculus[2][3] = getSVMVector3Difference(arrayGyroscopeValues);

@@ -1,4 +1,4 @@
-package logger;
+package notifications;
 
 import android.content.Context;
 import android.media.AudioManager;
