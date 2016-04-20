@@ -31,6 +31,8 @@ public class GatherDataForAI implements RollingWindowChangesListener {
     private int newWindowPosition = 0;
     private Lock newWindowPositionLock = new ReentrantLock();
 
+    private CurrentIncidenceState currentIncidenceState;
+
     public GatherDataForAI(int windowFrequency) {
         NUM_WINDOWS_TO_STORE_REAL_WORLD_CALCULUS = (int) Math.ceil(
                 (float) LAST_REAL_WORLD_CALCULUS_TO_STORE_MILLISECONDS /windowFrequency);
@@ -41,6 +43,7 @@ public class GatherDataForAI implements RollingWindowChangesListener {
         waitUntilNewRealWorldWindowArrivesSemaphore = new Semaphore(0);
         windowReferencesLock = new ReentrantLock();
         realWorldCalculusWindowsLock = new ReentrantLock();
+        currentIncidenceState = new CurrentIncidenceState();
     }
 
     @Override
@@ -122,7 +125,7 @@ public class GatherDataForAI implements RollingWindowChangesListener {
                         dataToBeAnalysedByAI.setSecondWindowPieceSpeedWindow(secondWindowPieceSpeedWindow);
                         dataToBeAnalysedByAI.setFirstWindowRealWorldCalculus(firstWindowRealWorldCalculus);
                         dataToBeAnalysedByAI.setSecondWindowRealWorldCalculus(secondWindowRealWorldCalculus);
-                        new AIPotholes(dataToBeAnalysedByAI).start();
+                        new AIPotholes(dataToBeAnalysedByAI, currentIncidenceState).start();
                     }
                 }
 
@@ -140,7 +143,7 @@ public class GatherDataForAI implements RollingWindowChangesListener {
                         for (int i = 0; i < windowToStoreRealWorldCalculus.length; i++) {
                             copyRealWorldCalculusWindow[i] = windowToStoreRealWorldCalculus[i];
                         }
-                        new AICurves(copyRealWorldCalculusWindow).start();
+                        new AICurves(copyRealWorldCalculusWindow, currentIncidenceState).start();
                     }
                 }
                 realWorldCalculusIdxLock.unlock();

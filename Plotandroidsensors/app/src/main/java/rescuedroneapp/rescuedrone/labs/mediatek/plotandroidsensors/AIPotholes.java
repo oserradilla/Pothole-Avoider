@@ -2,6 +2,9 @@ package rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors;
 
 import android.util.Log;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import notifications.AppNotifications;
 import notifications.MyTextToSpeech;
 
@@ -12,16 +15,37 @@ public class AIPotholes extends Thread {
 
     private DataToBeAnalysedByAI dataToBeAnalysedByAI;
 
-    public AIPotholes(DataToBeAnalysedByAI dataToBeAnalysedByAI) {
+    private CurrentIncidenceState currentIncidenceState;
+
+    public AIPotholes(DataToBeAnalysedByAI dataToBeAnalysedByAI,
+                      CurrentIncidenceState currentIncidenceState) {
         this.dataToBeAnalysedByAI = dataToBeAnalysedByAI;
+        this.currentIncidenceState = currentIncidenceState;
     }
 
     @Override
     public void run() {
             if(passesEnergyThreshold()) {
+                Timer timer = new Timer();
+                timer.schedule(new AskIfIncidenceHasBeenDetected(currentIncidenceState), 6750);
+            }
+    }
+
+    private class AskIfIncidenceHasBeenDetected extends TimerTask {
+
+        private IncidenceDetectedListener incidenceDetectedListener;
+
+        public AskIfIncidenceHasBeenDetected(IncidenceDetectedListener incidenceDetectedListener) {
+            this.incidenceDetectedListener = incidenceDetectedListener;
+        }
+
+        @Override
+        public void run() {
+            if(!incidenceDetectedListener.hasCurveBeenDetected()) {
                 MyTextToSpeech tts = MyTextToSpeech.getInstance();
                 tts.speakText("Bache");
             }
+        }
     }
 
     private boolean passesEnergyThreshold() {

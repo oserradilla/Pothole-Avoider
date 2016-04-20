@@ -1,26 +1,34 @@
 package rescuedroneapp.rescuedrone.labs.mediatek.plotandroidsensors;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import notifications.MyTextToSpeech;
 
 /**
  * Created by oscar on 01/04/2016.
  */
-public class AICurves extends Thread {
+public class AICurves extends Thread{
 
     private final float GYRO_Z_MEAN_THRESHOLD = 0.2f;
     private float[][][] realWorldCalculusWindow;
 
-    public AICurves(float[][][] realWorldCalculusWindow) {
+    private CurrentIncidenceState currentIncidenceState;
+
+    public AICurves(float[][][] realWorldCalculusWindow, CurrentIncidenceState currentIncidenceState) {
         this.realWorldCalculusWindow = realWorldCalculusWindow;
+        this.currentIncidenceState = currentIncidenceState;
     }
 
     @Override
     public void run() {
         int curveClass = passesGyroZMeanThreshold();
         if(curveClass != 0) {
+            currentIncidenceState.curveDetected(true);
             String curveClassString = curveClass > 0? "derecha" : "izquierda";
             MyTextToSpeech tts = MyTextToSpeech.getInstance();
             tts.speakText("Curva " + curveClassString);
+        } else {
+            currentIncidenceState.curveDetected(false);
         }
     }
 
@@ -38,6 +46,4 @@ public class AICurves extends Thread {
             curveClass = (int) (-meanGyroZ*10);
         return curveClass;
     }
-
-
 }
