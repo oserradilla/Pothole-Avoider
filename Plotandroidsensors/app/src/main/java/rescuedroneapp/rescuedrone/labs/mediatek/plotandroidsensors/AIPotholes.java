@@ -57,7 +57,7 @@ public class AIPotholes extends Thread {
         EnergyThreshold energyThreshold = new EnergyThreshold(
                 firstWindowPieceAccelGyroMagnetoRealWorldWindows, secondWindowPieceAccelGyroMagnetoRealWorldWindows);
         float energyDeviation = energyThreshold.calculateEnergyDeviation();
-        if (energyDeviation > 20) {
+        if (energyDeviation > 30) {
             passesEnergyThreshold = true;
         }
         return passesEnergyThreshold;
