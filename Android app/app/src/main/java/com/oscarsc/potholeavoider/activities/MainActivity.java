@@ -28,11 +28,11 @@ import com.oscarsc.potholeavoider.CurrentThemeHolder;
 import com.oscarsc.potholeavoider.DisplayingActivityClass;
 import com.oscarsc.potholeavoider.MainActivityHandler;
 import com.oscarsc.potholeavoider.R;
-import com.oscarsc.potholeavoider.ble.Ble;
+import com.oscarsc.potholeavoider.artificial_intelligence.ArtificialIntelligence;
 import com.oscarsc.potholeavoider.listeners.GpsListener;
 import com.oscarsc.potholeavoider.services.IncidenceCommunicator;
 import com.oscarsc.potholeavoider.services.WeatherCommunicator;
-import com.oscarsc.potholeavoider.text_to_speech.MyTextToSpeech;
+import com.oscarsc.potholeavoider.notifications.MyTextToSpeech;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -51,6 +51,9 @@ public class MainActivity extends Activity implements Observer {
     CommAmongActivities commAmongActivities=CommAmongActivities.getInstance();
     CurrentThemeHolder currentTheme=CurrentThemeHolder.getInstance();
     DisplayingActivityClass displayingActivity= DisplayingActivityClass.getInstance();
+
+    ArtificialIntelligence artificialIntelligence;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -133,10 +136,8 @@ public class MainActivity extends Activity implements Observer {
         weatherCommunicator = new WeatherCommunicator(mainHandler);
 
         // TODO añadir analyzer como bluetoothListener
-        // TODO añadir incidenceCommunicator como LocationListener (gps
-        // onlocation changed)
-
-        Ble ble=new Ble(this, tts, gpsManager);
+        artificialIntelligence = new ArtificialIntelligence(this);
+        artificialIntelligence.startCollecting();
     }
 
     private IconText[] createData() {
@@ -256,6 +257,7 @@ public class MainActivity extends Activity implements Observer {
         tts.shutDown();
         disableAlwaysScreenOn();
         mainHandler.finish();
+        artificialIntelligence.stopCollecting();
 		/*if(analizer!=null)
 			stopService(analizer);*/
     }

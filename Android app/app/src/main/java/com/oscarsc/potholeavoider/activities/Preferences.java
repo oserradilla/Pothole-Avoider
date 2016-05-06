@@ -2,19 +2,13 @@ package com.oscarsc.potholeavoider.activities;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.Preference;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
-import android.util.Log;
-import android.view.MenuItem;
 
 import com.oscarsc.potholeavoider.CommAmongActivities;
 import com.oscarsc.potholeavoider.CurrentThemeHolder;
 import com.oscarsc.potholeavoider.R;
-import com.oscarsc.potholeavoider.services.IncidenceCommunicator;
-import com.oscarsc.potholeavoider.text_to_speech.MyTextToSpeech;
+import com.oscarsc.potholeavoider.notifications.MyTextToSpeech;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 public class Preferences extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
