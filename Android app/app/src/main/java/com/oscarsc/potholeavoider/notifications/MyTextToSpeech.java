@@ -1,14 +1,11 @@
-package com.oscarsc.potholeavoider.text_to_speech;
+package com.oscarsc.potholeavoider.notifications;
 
 import java.util.Locale;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
-
-import com.oscarsc.potholeavoider.CurrentThemeHolder;
 
 public class MyTextToSpeech {
 	private static TextToSpeech tts;

@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import android.location.Location;
 
-import com.oscarsc.potholeavoider.text_to_speech.MyTextToSpeech;
+import com.oscarsc.potholeavoider.notifications.MyTextToSpeech;
 
 public abstract class Incidence implements Serializable{
     boolean isVisited=false;

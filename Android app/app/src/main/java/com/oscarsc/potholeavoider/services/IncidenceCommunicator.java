@@ -21,13 +21,12 @@ import com.oscarsc.potholeavoider.incidences.Incidence;
 import com.oscarsc.potholeavoider.incidences.IncidenceDistance;
 import com.oscarsc.potholeavoider.listeners.GpsListener;
 import com.oscarsc.potholeavoider.services.tasks.WebIncidences;
-import com.oscarsc.potholeavoider.text_to_speech.MyTextToSpeech;
+import com.oscarsc.potholeavoider.notifications.MyTextToSpeech;
 
 public class IncidenceCommunicator implements Observer {
     private MyTextToSpeech tts;
     private MainActivityHandler mainHandler;
     private ArrayList<Incidence> nextIncidences = new ArrayList<Incidence>();
-    private TimerTask incidenceUpdaterTask;
     public final static int NEXTINCIDENCESUPDATETIME = 120;// 120 seconds = 2 minutes
     public final static float LOADNEXTINCIDENCESRATIOKILOMETERS = 1000.0f;// 10Km
     public final static double PROXIMITYWARNINGDISTANCEKILOMETERS = 1.0;// 1Km
